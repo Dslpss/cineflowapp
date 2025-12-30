@@ -121,8 +121,50 @@ class _MainNavigationState extends State<MainNavigation>
     super.initState();
     _pageController = PageController(initialPage: _currentIndex);
     
-    // Verifica se há atualização disponível
+    // Verifica atualizações e status do usuário
     _checkForUpdate();
+    _checkUserStatus();
+  }
+  
+  Future<void> _checkUserStatus() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.currentUser;
+    
+    if (user != null) {
+      // Sincroniza dados básicos
+      AppCheckService.syncUserData(user);
+      
+      // Verifica bloqueio
+      final status = await AppCheckService.checkUserStatus(user.uid);
+      
+      if (status.isBlocked && mounted) {
+        // Mostra alerta e desloga
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Acesso Bloqueado'),
+            content: Text(status.blockedReason.isNotEmpty 
+              ? 'Motivo: ${status.blockedReason}' 
+              : 'Sua conta foi bloqueada pelo administrador.'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  authProvider.signOut();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
+        );
+        
+        // Garante logout se o dialog for fechado de outra forma
+        if (authProvider.isAuthenticated) {
+          authProvider.signOut();
+        }
+      }
+    }
   }
   
   Future<void> _checkForUpdate() async {

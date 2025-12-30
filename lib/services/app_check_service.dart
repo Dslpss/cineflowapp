@@ -5,8 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 /// Serviço para verificar atualizações do app e status do usuário
 class AppCheckService {
   // URL base do servidor admin (alterar para produção)
-  static const String _baseUrl = 'http://10.0.2.2:3000'; // Android emulator
-  // static const String _baseUrl = 'https://seu-servidor.com'; // Produção
+  // static const String _baseUrl = 'http://10.0.2.2:3000'; // Android emulator
+  static const String _baseUrl = 'https://cineflowapp-production.up.railway.app'; // Produção Railway
   
   /// Verifica se o usuário está bloqueado
   static Future<UserStatus> checkUserStatus(String uid) async {
