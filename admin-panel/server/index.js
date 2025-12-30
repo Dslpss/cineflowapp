@@ -40,7 +40,32 @@ const upload = multer({
 // Middlewares
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, '../public')));
+
+// Servir arquivos estáticos do frontend
+const publicPath = path.join(__dirname, '../public');
+console.log('📂 Servindo arquivos estáticos de:', publicPath);
+
+// Verifica se a pasta existe
+if (fs.existsSync(publicPath)) {
+  console.log('✅ Pasta public encontrada!');
+  console.log('📄 Arquivos:', fs.readdirSync(publicPath));
+} else {
+  console.error('❌ Pasta public NÃO encontrada em:', publicPath);
+  console.log('📂 Conteúdo de __dirname:', fs.readdirSync(__dirname));
+  console.log('📂 Conteúdo de ../:', fs.readdirSync(path.join(__dirname, '../')));
+}
+
+app.use(express.static(publicPath));
+
+// Rota raiz explícita para debug (caso o static falhe)
+app.get('/', (req, res, next) => {
+  const indexPath = path.join(publicPath, 'index.html');
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath);
+  } else {
+    next(); // Passa para o próximo handler (404)
+  }
+});
 
 // Lista de emails de administradores autorizados (via env ou Firestore)
 let ADMIN_EMAILS = process.env.ADMIN_EMAILS 
