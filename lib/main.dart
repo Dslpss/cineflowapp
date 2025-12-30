@@ -18,7 +18,7 @@ import 'screens/login_screen.dart';
 import 'widgets/update_card.dart';
 
 // Versão atual do app (atualizar a cada release)
-const String appVersion = '1.0.0';
+const String appVersion = '1.0.2';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -128,7 +128,7 @@ class _MainNavigationState extends State<MainNavigation>
   
   Future<void> _checkUserStatus() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final user = authProvider.currentUser;
+    final user = authProvider.user; // Corrigido de currentUser para user
     
     if (user != null) {
       // Sincroniza dados básicos
@@ -141,28 +141,36 @@ class _MainNavigationState extends State<MainNavigation>
         // Mostra alerta e desloga
         await showDialog(
           context: context,
-          barrierDismissible: false,
-          builder: (context) => AlertDialog(
-            title: const Text('Acesso Bloqueado'),
-            content: Text(status.blockedReason.isNotEmpty 
-              ? 'Motivo: ${status.blockedReason}' 
-              : 'Sua conta foi bloqueada pelo administrador.'),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                  authProvider.signOut();
-                },
-                child: const Text('OK'),
-              ),
-            ],
+          barrierDismissible: false, // Impede clicar fora
+          builder: (context) => PopScope(
+            canPop: false, // Impede botão voltar do Android
+            child: AlertDialog(
+              title: const Text('Acesso Bloqueado'),
+              content: Text(status.blockedReason.isNotEmpty 
+                ? 'Motivo: ${status.blockedReason}' 
+                : 'Sua conta foi bloqueada pelo administrador.'),
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    // Fecha o dialog
+                    Navigator.of(context).pop();
+                    
+                    // Desloga e força ir para login
+                    await authProvider.signOut();
+                    
+                    if (mounted) {
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (context) => const LoginScreen()),
+                        (route) => false,
+                      );
+                    }
+                  },
+                  child: const Text('SAIR'),
+                ),
+              ],
+            ),
           ),
         );
-        
-        // Garante logout se o dialog for fechado de outra forma
-        if (authProvider.isAuthenticated) {
-          authProvider.signOut();
-        }
       }
     }
   }

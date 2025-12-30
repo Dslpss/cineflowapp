@@ -1,7 +1,7 @@
 name: cineflow
 description: "CineFlow - Premium Streaming App for TV, Movies and Series"
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.2+2
 
 environment:
   sdk: ^3.7.0-0
@@ -37,6 +37,9 @@ dependencies:
   
   # URL Launcher
   url_launcher: ^6.2.2
+  
+  # Wakelock
+  wakelock_plus: ^1.1.4
 
 dev_dependencies:
   flutter_test:

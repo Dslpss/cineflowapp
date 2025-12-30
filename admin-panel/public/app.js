@@ -2,7 +2,7 @@
 // CineFlow Admin Panel - JavaScript
 // ============================================
 
-// Configuração do Firebase (substituir pelos seus dados)
+
 const firebaseConfig = {
   apiKey: "AIzaSyAqvfTFpri7-quRf8uKf9lKjQElQuBUTu8",
   authDomain: "cineflow-2e9c1.firebaseapp.com",

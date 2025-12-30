@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:chewie/chewie.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 import '../models/channel.dart';
 import '../theme/app_theme.dart';
 
@@ -28,6 +29,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
   @override
   void initState() {
     super.initState();
+    // Ativa wakelock para manter tela ligada
+    WakelockPlus.enable();
+    
     _initializePlayer();
     
     // Força orientação paisagem para o player
@@ -148,6 +152,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   void dispose() {
+    // Desativa wakelock ao sair
+    WakelockPlus.disable();
+    
     _videoController?.dispose();
     _chewieController?.dispose();
     
