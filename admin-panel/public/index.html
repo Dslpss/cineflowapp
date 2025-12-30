@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CineFlow Admin Panel</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+</head>
+<body>
+  <!-- Tela de Login -->
+  <div id="login-screen" class="screen active">
+    <div class="login-container">
+      <div class="login-logo">
+        <span class="material-icons-round">play_circle</span>
+      </div>
+      <h1>CineFlow</h1>
+      <p class="subtitle">Painel de Administração</p>
+      
+      <form id="login-form">
+        <div class="input-group">
+          <span class="material-icons-round">email</span>
+          <input type="email" id="login-email" placeholder="Email do administrador" required>
+        </div>
+        <div class="input-group">
+          <span class="material-icons-round">lock</span>
+          <input type="password" id="login-password" placeholder="Senha" required>
+        </div>
+        <button type="submit" class="btn-primary" id="login-btn">
+          <span class="material-icons-round">login</span>
+          Entrar
+        </button>
+      </form>
+      
+      <div id="login-error" class="error-message"></div>
+    </div>
+  </div>
+
+  <!-- Dashboard Principal -->
+  <div id="dashboard-screen" class="screen">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <span class="material-icons-round">play_circle</span>
+        <span class="logo-text">CineFlow</span>
+      </div>
+      
+      <nav class="sidebar-nav">
+        <a href="#" class="nav-item active" data-section="dashboard">
+          <span class="material-icons-round">dashboard</span>
+          Dashboard
+        </a>
+        <a href="#" class="nav-item" data-section="users">
+          <span class="material-icons-round">people</span>
+          Usuários
+        </a>
+        <a href="#" class="nav-item" data-section="updates">
+          <span class="material-icons-round">system_update</span>
+          Atualizações
+        </a>
+        <a href="#" class="nav-item" data-section="settings">
+          <span class="material-icons-round">settings</span>
+          Configurações
+        </a>
+      </nav>
+      
+      <div class="sidebar-footer">
+        <div class="admin-info">
+          <div class="admin-avatar" id="admin-avatar">A</div>
+          <div class="admin-details">
+            <span class="admin-name" id="admin-name">Admin</span>
+            <span class="admin-email" id="admin-email">admin@email.com</span>
+          </div>
+        </div>
+        <button class="btn-logout" id="logout-btn">
+          <span class="material-icons-round">logout</span>
+        </button>
+      </div>
+    </aside>
+    
+    <!-- Conteúdo Principal -->
+    <main class="main-content">
+      <!-- Seção Dashboard -->
+      <section id="section-dashboard" class="section active">
+        <header class="section-header">
+          <h2>Dashboard</h2>
+          <p>Visão geral do CineFlow</p>
+        </header>
+        
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #6C5CE7, #00D9FF);">
+              <span class="material-icons-round">people</span>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-total-users">0</span>
+              <span class="stat-label">Total de Usuários</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #00FF87, #60EFFF);">
+              <span class="material-icons-round">verified_user</span>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-active-users">0</span>
+              <span class="stat-label">Usuários Ativos</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #FF6B9D, #FF8E53);">
+              <span class="material-icons-round">block</span>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-blocked-users">0</span>
+              <span class="stat-label">Usuários Bloqueados</span>
+            </div>
+          </div>
+          
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #00D9FF, #6C5CE7);">
+              <span class="material-icons-round">person_add</span>
+            </div>
+            <div class="stat-info">
+              <span class="stat-value" id="stat-recent-users">0</span>
+              <span class="stat-label">Novos (7 dias)</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="recent-section">
+          <h3>Usuários Recentes</h3>
+          <div id="recent-users-list" class="users-preview"></div>
+        </div>
+      </section>
+      
+      <!-- Seção Usuários -->
+      <section id="section-users" class="section">
+        <header class="section-header">
+          <h2>Gerenciar Usuários</h2>
+          <p>Lista de todos os usuários cadastrados</p>
+        </header>
+        
+        <div class="search-bar">
+          <span class="material-icons-round">search</span>
+          <input type="text" id="user-search" placeholder="Buscar por nome ou email...">
+        </div>
+        
+        <div class="users-table-container">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>Usuário</th>
+                <th>Email</th>
+                <th>Cadastro</th>
+                <th>Último Acesso</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body">
+              <!-- Preenchido via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+      
+      <!-- Seção Atualizações -->
+      <section id="section-updates" class="section">
+        <header class="section-header">
+          <h2>Gerenciar Atualizações</h2>
+          <p>Upload e configuração de novas versões do app</p>
+        </header>
+        
+        <!-- Card de Upload de APK -->
+        <div class="update-card" style="margin-bottom: 24px;">
+          <h3>
+            <span class="material-icons-round">upload_file</span>
+            Upload de APK
+          </h3>
+          
+          <!-- Área de Drop -->
+          <div id="drop-zone" class="drop-zone">
+            <span class="material-icons-round" style="font-size: 48px; color: var(--primary);">cloud_upload</span>
+            <p>Arraste o APK aqui ou <span style="color: var(--secondary); cursor: pointer;" onclick="document.getElementById('apk-file').click()">clique para selecionar</span></p>
+            <p style="font-size: 12px; color: var(--text-muted);">Máximo 300MB • Apenas arquivos .apk</p>
+            <input type="file" id="apk-file" accept=".apk" style="display: none;">
+          </div>
+          
+          <!-- Info do arquivo selecionado -->
+          <div id="file-info" class="file-info" style="display: none;">
+            <div class="file-details">
+              <span class="material-icons-round">android</span>
+              <div>
+                <strong id="file-name">app.apk</strong>
+                <span id="file-size">0 MB</span>
+              </div>
+            </div>
+            <button class="btn-remove" onclick="removeFile()">
+              <span class="material-icons-round">close</span>
+            </button>
+          </div>
+          
+          <!-- Versão do upload -->
+          <div class="form-group" style="margin-top: 16px;">
+            <label for="upload-version">Versão do APK</label>
+            <input type="text" id="upload-version" placeholder="1.0.0" value="1.0.0">
+          </div>
+          
+          <!-- Progress bar -->
+          <div id="upload-progress" class="progress-container" style="display: none;">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+            <span id="progress-text">0%</span>
+          </div>
+          
+          <button type="button" class="btn-primary" id="upload-btn" onclick="uploadAPK()" style="margin-top: 16px;">
+            <span class="material-icons-round">cloud_upload</span>
+            Enviar APK
+          </button>
+        </div>
+        
+        <!-- Card de APK Atual -->
+        <div class="update-card" style="margin-bottom: 24px;">
+          <h3>
+            <span class="material-icons-round">inventory</span>
+            APK Atual
+          </h3>
+          
+          <div id="current-apk-info">
+            <p style="color: var(--text-muted);">Carregando...</p>
+          </div>
+        </div>
+        
+        <!-- Card de Configurações de Versão -->
+        <div class="update-card">
+          <h3>
+            <span class="material-icons-round">settings</span>
+            Configurações de Atualização
+          </h3>
+          
+          <form id="update-form">
+            <div class="form-group">
+              <label for="min-version">Versão Mínima Exigida</label>
+              <input type="text" id="min-version" placeholder="1.0.0" value="1.0.0">
+            </div>
+            
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="force-update">
+                <span class="checkmark"></span>
+                Forçar atualização (bloqueia app em versões antigas)
+              </label>
+            </div>
+            
+            <div class="form-group">
+              <label for="update-message">Mensagem de Atualização</label>
+              <textarea id="update-message" rows="3" placeholder="Uma nova versão está disponível com melhorias incríveis!"></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label for="download-url">URL de Download (auto-preenchido após upload)</label>
+              <input type="url" id="download-url" placeholder="https://..." readonly>
+            </div>
+            
+            <button type="submit" class="btn-primary">
+              <span class="material-icons-round">save</span>
+              Salvar Configurações
+            </button>
+          </form>
+        </div>
+      </section>
+      
+      <!-- Seção Configurações -->
+      <section id="section-settings" class="section">
+        <header class="section-header">
+          <h2>Configurações</h2>
+          <p>Configurações do painel administrativo</p>
+        </header>
+        
+        <div class="settings-card">
+          <h3>
+            <span class="material-icons-round">admin_panel_settings</span>
+            Administradores
+          </h3>
+          <p class="settings-description">
+            Adicione emails de usuários que terão acesso ao painel admin.
+          </p>
+          
+          <div class="form-group">
+            <label for="admin-emails">Emails dos Administradores (um por linha)</label>
+            <textarea id="admin-emails" rows="4" placeholder="admin@email.com"></textarea>
+          </div>
+          
+          <button type="button" class="btn-primary" id="save-admins-btn">
+            <span class="material-icons-round">save</span>
+            Salvar Administradores
+          </button>
+        </div>
+      </section>
+    </main>
+  </div>
+  
+  <!-- Modal de Bloqueio -->
+  <div id="block-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Bloquear Usuário</h3>
+        <button class="modal-close" onclick="closeBlockModal()">
+          <span class="material-icons-round">close</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Tem certeza que deseja bloquear o acesso deste usuário?</p>
+        <p class="user-to-block" id="user-to-block-info"></p>
+        
+        <div class="form-group">
+          <label for="block-reason">Motivo do bloqueio (opcional)</label>
+          <input type="text" id="block-reason" placeholder="Ex: Violação dos termos de uso">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="closeBlockModal()">Cancelar</button>
+        <button class="btn-danger" id="confirm-block-btn">
+          <span class="material-icons-round">block</span>
+          Bloquear
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Toast Notifications -->
+  <div id="toast-container"></div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  
+  <script src="app.js"></script>
+</body>
+</html>
