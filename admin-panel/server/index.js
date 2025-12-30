@@ -328,7 +328,15 @@ app.post('/api/admin/upload-apk', authenticateAdmin, upload.single('apk'), async
     const fileSizeFormatted = (fileSize / (1024 * 1024)).toFixed(2) + ' MB';
     
     // Atualiza informações no Firestore
-    const downloadUrl = `${req.protocol}://${req.get('host')}/download/app`;
+    // Gera URL de download correta
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+    const host = req.headers['x-forwarded-host'] || req.get('host');
+    const baseUrl = `${protocol}://${host}`;
+    
+    // Se estiver no Railway, força HTTPS
+    const downloadUrl = process.env.RAILWAY_PUBLIC_DOMAIN 
+      ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/download/app`
+      : `${baseUrl}/download/app`;
     
     await db.collection('app_config').doc('version').set({
       minVersion: version || '1.0.0',
