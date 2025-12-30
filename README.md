@@ -1,4 +1,5 @@
-# cineflow
+# CineFlow 🎬
+> Premium Streaming App & Admin Panel
 
 A new Flutter project.
 
