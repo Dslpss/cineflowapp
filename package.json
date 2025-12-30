@@ -1,0 +1,11 @@
+{
+  "name": "cineflow-root",
+  "version": "1.0.0",
+  "scripts": {
+    "start": "cd admin-panel/server && npm install && npm start",
+    "build": "cd admin-panel/server && npm install"
+  },
+  "engines": {
+    "node": "18.x"
+  }
+}
