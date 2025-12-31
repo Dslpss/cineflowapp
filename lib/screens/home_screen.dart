@@ -20,35 +20,23 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0F0F18),
-              AppTheme.backgroundColor,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Consumer<ChannelProvider>(
-            builder: (context, provider, child) {
-              if (provider.isLoading) {
-                return const _LoadingState();
-              }
-              
-              if (provider.error != null) {
-                return _ErrorState(error: provider.error!);
-              }
-              
-              if (provider.allChannels.isEmpty) {
-                return const _EmptyState();
-              }
-              
-              return _HomeContent(provider: provider);
-            },
-          ),
+      body: SafeArea(
+        child: Consumer<ChannelProvider>(
+          builder: (context, provider, child) {
+            if (provider.isLoading) {
+              return const _LoadingState();
+            }
+            
+            if (provider.error != null) {
+              return _ErrorState(error: provider.error!);
+            }
+            
+            if (provider.allChannels.isEmpty) {
+              return const _EmptyState();
+            }
+            
+            return _HomeContent(provider: provider);
+          },
         ),
       ),
     );
@@ -428,18 +416,50 @@ class _HomeContent extends StatelessWidget {
     VoidCallback? onSeeAll,
   }) {
     return Padding(
-      padding: const EdgeInsets.only(left: 16, right: 16, top: 24, bottom: 12),
+      padding: const EdgeInsets.fromLTRB(16, 32, 16, 16),
       child: Row(
         children: [
+          // Barra vertical de destaque (Neon)
           Container(
-            padding: const EdgeInsets.all(8),
+            width: 4,
+            height: 38,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(10),
+              color: color,
+              borderRadius: BorderRadius.circular(4),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.6),
+                  blurRadius: 10,
+                  offset: const Offset(1, 0),
+                ),
+              ],
             ),
-            child: Icon(icon, size: 20, color: color),
           ),
           const SizedBox(width: 12),
+          
+          // Ícone em container estilizado
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  color.withOpacity(0.2),
+                  color.withOpacity(0.05),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: color.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Icon(icon, size: 22, color: color),
+          ),
+          const SizedBox(width: 12),
+          
+          // Títulos
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -447,44 +467,70 @@ class _HomeContent extends StatelessWidget {
                 Text(
                   title,
                   style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
                   ),
                 ),
                 if (channelCount != null)
-                  Text(
-                    '$channelCount canais',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: color.withOpacity(0.8),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: color.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            '$channelCount canais',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              color: color,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
               ],
             ),
           ),
+          
+          // Botão "Ver todos"
           if (onSeeAll != null)
             GestureDetector(
               onTap: onSeeAll,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: Colors.white.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.1),
+                  ),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      'Ver todos',
+                      'Ver tudo',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: color,
+                        color: Colors.white.withOpacity(0.9),
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Icon(Icons.arrow_forward_ios_rounded, size: 12, color: color),
+                    const SizedBox(width: 6),
+                    Icon(
+                      Icons.arrow_forward_rounded, 
+                      size: 14, 
+                      color: Colors.white.withOpacity(0.9)
+                    ),
                   ],
                 ),
               ),
@@ -674,6 +720,10 @@ class _ChannelCard extends StatelessWidget {
                                 fit: BoxFit.contain,
                                 width: 70,
                                 height: 70,
+                                memCacheWidth: 210, // 3x pixel density
+                                memCacheHeight: 210,
+                                maxWidthDiskCache: 400,
+                                maxHeightDiskCache: 400,
                                 placeholder: (_, __) => const Icon(
                                   Icons.tv,
                                   size: 32,
@@ -990,6 +1040,10 @@ class _LiveChannelHighlightCard extends StatelessWidget {
                                 fit: BoxFit.contain,
                                 width: 100,
                                 height: 100,
+                                memCacheWidth: 300, // 3x pixel density
+                                memCacheHeight: 300,
+                                maxWidthDiskCache: 600,
+                                maxHeightDiskCache: 600,
                                 placeholder: (_, __) => const Icon(
                                   Icons.tv,
                                   size: 48,
@@ -1286,6 +1340,10 @@ class _ChannelGridItem extends StatelessWidget {
                         child: CachedNetworkImage(
                           imageUrl: channel.logoUrl,
                           fit: BoxFit.contain,
+                          memCacheWidth: 300,
+                          memCacheHeight: 300,
+                          maxWidthDiskCache: 600,
+                          maxHeightDiskCache: 600,
                           errorWidget: (_, __, ___) => const Icon(
                             Icons.tv,
                             size: 32,

@@ -23,19 +23,8 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0F0F18),
-              AppTheme.backgroundColor,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Consumer<ChannelProvider>(
+      body: SafeArea(
+        child: Consumer<ChannelProvider>(
             builder: (context, provider, child) {
               if (_selectedCategory != null) {
                 return _buildCategoryChannels(context, provider);
@@ -369,16 +358,24 @@ class _CategoryCard extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              category.color.withOpacity(0.25),
-              category.color.withOpacity(0.05),
+              category.color.withOpacity(0.4),
+              category.color.withOpacity(0.1),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
           border: Border.all(
-            color: category.color.withOpacity(0.3),
+            color: category.color.withOpacity(0.5),
+            width: 1.5,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: category.color.withOpacity(0.2),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Stack(
           children: [
@@ -388,8 +385,8 @@ class _CategoryCard extends StatelessWidget {
               bottom: -15,
               child: Icon(
                 category.icon,
-                size: 80,
-                color: category.color.withOpacity(0.1),
+                size: 90,
+                color: category.color.withOpacity(0.15),
               ),
             ),
             
@@ -401,15 +398,22 @@ class _CategoryCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: category.color.withOpacity(0.2),
+                      color: category.color.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: category.color.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Icon(
                       category.icon,
-                      color: category.color,
-                      size: 22,
+                      color: Colors.white,
+                      size: 24,
                     ),
                   ),
                   Column(
@@ -418,37 +422,57 @@ class _CategoryCard extends StatelessWidget {
                       Text(
                         category.displayName,
                         style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
                         ),
-                        maxLines: 1,
+                        maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Row(
                         children: [
-                          Text(
-                            '${category.channelCount}',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: category.color,
-                              fontWeight: FontWeight.bold,
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withOpacity(0.3),
+                              borderRadius: BorderRadius.circular(8),
                             ),
-                          ),
-                          const SizedBox(width: 4),
-                          const Text(
-                            'canais',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: AppTheme.textMuted,
+                            child: Row(
+                              children: [
+                                Text(
+                                  '${category.channelCount}',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: category.color,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 4),
+                                const Text(
+                                  'canais',
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: AppTheme.textMuted,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           const Spacer(),
-                          Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: 14,
-                            color: category.color.withOpacity(0.7),
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              color: category.color.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.arrow_forward_ios_rounded,
+                              size: 10,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
                           ),
                         ],
                       ),

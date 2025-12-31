@@ -87,16 +87,8 @@ class _MoviesScreenState extends State<MoviesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF0F0F18), AppTheme.backgroundColor],
-          ),
-        ),
-        child: SafeArea(
-          child: Consumer<ChannelProvider>(
+      body: SafeArea(
+        child: Consumer<ChannelProvider>(
             builder: (context, provider, child) {
               final genres = _getGenres(provider);
               
@@ -111,7 +103,6 @@ class _MoviesScreenState extends State<MoviesScreen> {
               return _buildGenresView(context, genres);
             },
           ),
-        ),
       ),
     );
   }
@@ -579,6 +570,10 @@ class _MovieCard extends StatelessWidget {
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: double.infinity,
+                          memCacheWidth: 400,
+                          memCacheHeight: 600,
+                          maxWidthDiskCache: 600,
+                          maxHeightDiskCache: 900,
                           placeholder: (_, __) => const Center(
                             child: Icon(Icons.movie, color: AppTheme.textMuted, size: 32),
                           ),

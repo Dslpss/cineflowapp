@@ -362,12 +362,18 @@ class _ChannelLogo extends StatelessWidget {
       );
     }
 
+    final cacheSize = (size * 3).toInt(); // 3x for high density screens
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(8),
       child: CachedNetworkImage(
         imageUrl: logoUrl,
         width: size,
         height: size,
+        memCacheWidth: cacheSize,
+        memCacheHeight: cacheSize,
+        maxWidthDiskCache: 400, // Limit disk cache size too
+        maxHeightDiskCache: 400,
         fit: BoxFit.contain,
         placeholder: (context, url) => Container(
           width: size,

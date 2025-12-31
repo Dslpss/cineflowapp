@@ -14,19 +14,8 @@ class FavoritesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0F0F18),
-              AppTheme.backgroundColor,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
+      body: SafeArea(
+        child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Header
@@ -48,7 +37,6 @@ class FavoritesScreen extends StatelessWidget {
               ),
             ],
           ),
-        ),
       ),
     );
   }

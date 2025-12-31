@@ -61,19 +61,8 @@ class _SeriesScreenState extends State<SeriesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0F0F18),
-              AppTheme.backgroundColor,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
+      body: SafeArea(
+        child: Column(
             children: [
               // Header
               _buildHeader(),
@@ -95,7 +84,6 @@ class _SeriesScreenState extends State<SeriesScreen> {
               ),
             ],
           ),
-        ),
       ),
     );
   }
@@ -419,6 +407,10 @@ class _SeriesCard extends StatelessWidget {
                           fit: BoxFit.cover,
                           width: double.infinity,
                           height: double.infinity,
+                          memCacheWidth: 400,
+                          memCacheHeight: 600,
+                          maxWidthDiskCache: 600,
+                          maxHeightDiskCache: 900,
                           placeholder: (context, url) => Container(
                             color: AppTheme.surfaceColor,
                             child: const Center(
@@ -555,6 +547,10 @@ class _ChannelTile extends StatelessWidget {
                   imageUrl: channel.logoUrl,
                   width: 50,
                   height: 50,
+                  memCacheWidth: 150,
+                  memCacheHeight: 150,
+                  maxWidthDiskCache: 300,
+                  maxHeightDiskCache: 300,
                   fit: BoxFit.cover,
                   errorWidget: (_, __, ___) => Container(
                     width: 50,

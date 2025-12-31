@@ -196,7 +196,7 @@ class _CategoryGridItem extends StatelessWidget {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              category.color.withOpacity(0.3),
+              category.color.withOpacity(0.4),
               category.color.withOpacity(0.1),
             ],
             begin: Alignment.topLeft,
@@ -204,8 +204,16 @@ class _CategoryGridItem extends StatelessWidget {
           ),
           borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
           border: Border.all(
-            color: category.color.withOpacity(0.3),
+            color: category.color.withOpacity(0.5),
+            width: 1.5,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: category.color.withOpacity(0.2),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Stack(
           children: [
@@ -216,7 +224,7 @@ class _CategoryGridItem extends StatelessWidget {
               child: Icon(
                 category.icon,
                 size: 100,
-                color: category.color.withOpacity(0.1),
+                color: category.color.withOpacity(0.15),
               ),
             ),
             
@@ -228,14 +236,21 @@ class _CategoryGridItem extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: category.color.withOpacity(0.2),
+                      color: category.color.withOpacity(0.3),
                       borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: category.color.withOpacity(0.2),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Icon(
                       category.icon,
-                      color: category.color,
+                      color: Colors.white,
                       size: 24,
                     ),
                   ),
@@ -245,20 +260,21 @@ class _CategoryGridItem extends StatelessWidget {
                       Text(
                         category.displayName,
                         style: const TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: AppTheme.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          letterSpacing: 0.5,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Text(
                         '${category.channelCount} canais',
                         style: TextStyle(
                           fontSize: 12,
                           color: category.color,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ],

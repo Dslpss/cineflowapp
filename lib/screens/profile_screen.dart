@@ -12,19 +12,8 @@ class ProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              const Color(0xFF0F0F18),
-              AppTheme.backgroundColor,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: Consumer<app_auth.AuthProvider>(
+      body: SafeArea(
+        child: Consumer<app_auth.AuthProvider>(
             builder: (context, auth, _) {
               final user = auth.user;
               
@@ -58,7 +47,6 @@ class ProfileScreen extends StatelessWidget {
               );
             },
           ),
-        ),
       ),
     );
   }

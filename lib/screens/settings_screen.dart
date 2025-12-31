@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../services/storage_service.dart';
 import '../theme/app_theme.dart';
 import '../providers/channel_provider.dart';
@@ -15,11 +16,13 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   String _preferredQuality = 'FHD';
   bool _showAdultContent = false;
+  String _appVersion = '1.0.0';
 
   @override
   void initState() {
     super.initState();
     _loadSettings();
+    _loadAppVersion();
   }
 
   void _loadSettings() {
@@ -29,23 +32,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
   }
 
+  Future<void> _loadAppVersion() async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    if (mounted) {
+      setState(() {
+        _appVersion = packageInfo.version;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFF0F0F18),
-              AppTheme.backgroundColor,
-            ],
-          ),
-        ),
-        child: SafeArea(
-          child: CustomScrollView(
+      body: SafeArea(
+        child: CustomScrollView(
             slivers: [
               // Header
               SliverToBoxAdapter(
@@ -141,7 +142,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: 'Sobre',
                   icon: Icons.info_outline_rounded,
                   children: [
-                    _buildInfoItem('Versão', '1.0.0'),
+                    _buildInfoItem('Versão', _appVersion),
                     const Divider(height: 1, color: AppTheme.surfaceColor),
                     _buildInfoItem('Desenvolvido por', 'CineFlow Team'),
                     const Divider(height: 1, color: AppTheme.surfaceColor),
@@ -167,7 +168,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
           ),
-        ),
       ),
     );
   }
