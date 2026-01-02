@@ -3,8 +3,10 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
+  bonsoir_windows
   firebase_auth
   firebase_core
+  share_plus
   url_launcher_windows
 )
 

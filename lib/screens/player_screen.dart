@@ -5,6 +5,7 @@ import 'package:chewie/chewie.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import '../models/channel.dart';
 import '../theme/app_theme.dart';
+import '../widgets/cast_device_sheet.dart';
 
 /// Tela de reprodução de vídeo
 class PlayerScreen extends StatefulWidget {
@@ -292,8 +293,21 @@ class _PlayerScreenState extends State<PlayerScreen> {
                   ],
                 ),
               ),
-              
-              // Qualidade
+                            // Botão de Cast (transmitir para TV)
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: CastButton(
+                  mediaUrl: widget.channel.streamUrl,
+                  mediaTitle: widget.channel.name,
+                  thumbnailUrl: widget.channel.logoUrl,
+                  color: Colors.white,
+                ),
+              ),
+                            // Qualidade
               if (widget.channel.quality.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(

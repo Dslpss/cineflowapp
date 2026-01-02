@@ -16,9 +16,9 @@ import 'screens/favorites_screen.dart';
 import 'screens/settings_screen.dart';
 import 'screens/login_screen.dart';
 import 'widgets/update_card.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
-// Versão atual do app (atualizar a cada release)
-const String appVersion = '1.0.2';
+// Versão atual é obtida dinamicamente via package_info_plus
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -178,9 +178,11 @@ class _MainNavigationState extends State<MainNavigation>
   Future<void> _checkForUpdate() async {
     try {
       final versionInfo = await AppCheckService.checkAppVersion();
+      final packageInfo = await PackageInfo.fromPlatform();
+      final currentVersion = packageInfo.version;
       
       // Verifica se a versão atual é menor que a mínima exigida
-      if (AppCheckService.isVersionOutdated(appVersion, versionInfo.minVersion)) {
+      if (AppCheckService.isVersionOutdated(currentVersion, versionInfo.minVersion)) {
         setState(() {
           _updateInfo = versionInfo;
           _showUpdateCard = true;

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../services/storage_service.dart';
+import '../services/cast_service.dart';
+import '../widgets/cast_device_sheet.dart';
 import '../theme/app_theme.dart';
 import '../providers/channel_provider.dart';
 
@@ -104,6 +106,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       subtitle: 'Mostrar apenas canais com melhor qualidade',
                       value: true,
                       onChanged: (value) {},
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Seção de Cast/TV
+              SliverToBoxAdapter(
+                child: _buildSection(
+                  title: 'Transmitir para TV',
+                  icon: Icons.cast_rounded,
+                  children: [
+                    _buildCastStatus(),
+                    const Divider(height: 1, color: AppTheme.surfaceColor),
+                    _buildSettingAction(
+                      title: 'Gerenciar dispositivos',
+                      subtitle: 'Conectar ou desconectar da TV',
+                      icon: Icons.settings_remote_rounded,
+                      onTap: () {
+                        CastDeviceSheet.show(context);
+                      },
                     ),
                   ],
                 ),
@@ -555,6 +577,95 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildCastStatus() {
+    final castService = CastService();
+    
+    return ListenableBuilder(
+      listenable: castService,
+      builder: (context, _) {
+        final isConnected = castService.isConnected;
+        final deviceName = castService.connectedDevice?.name;
+
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: (isConnected ? Colors.green : AppTheme.primaryColor)
+                      .withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  isConnected ? Icons.cast_connected_rounded : Icons.cast_rounded,
+                  size: 20,
+                  color: isConnected ? Colors.green : AppTheme.primaryColor,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isConnected ? 'Conectado' : 'Desconectado',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isConnected 
+                          ? 'Transmitindo para $deviceName'
+                          : 'Nenhum dispositivo conectado',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (isConnected)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: const BoxDecoration(
+                          color: Colors.green,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Text(
+                        'Ativo',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
     );
   }
 
