@@ -26,6 +26,12 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _isLoading = true;
   String? _error;
   bool _showControls = true;
+  
+  // Controle de reconexão automática
+  int _reconnectAttempts = 0;
+  static const int _maxReconnectAttempts = 5;
+  bool _isReconnecting = false;
+  DateTime? _lastPlaybackTime;
 
   @override
   void initState() {
@@ -140,14 +146,91 @@ class _PlayerScreenState extends State<PlayerScreen> {
         ),
       );
 
+      // Listener para detectar quando o stream para (conexão cortada)
+      _videoController!.addListener(_onPlayerStateChanged);
+
       setState(() {
         _isLoading = false;
+        _reconnectAttempts = 0; // Reset tentativas em caso de sucesso
+        _isReconnecting = false;
       });
     } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _error = 'Erro ao inicializar o player: $e';
-      });
+      // Se falhou e ainda tem tentativas, tenta reconectar
+      if (_isReconnecting && _reconnectAttempts < _maxReconnectAttempts) {
+        _reconnectAttempts++;
+        await Future.delayed(const Duration(seconds: 3));
+        if (mounted) {
+          _initializePlayer();
+        }
+      } else {
+        setState(() {
+          _isLoading = false;
+          _error = 'Erro ao inicializar o player: $e';
+          _isReconnecting = false;
+        });
+      }
+    }
+  }
+
+  /// Monitora estado do player para detectar interrupções
+  void _onPlayerStateChanged() {
+    if (_videoController == null || !mounted) return;
+    
+    final isPlaying = _videoController!.value.isPlaying;
+    final hasError = _videoController!.value.hasError;
+    
+    // Se está reproduzindo, atualiza o tempo da última reprodução
+    if (isPlaying) {
+      _lastPlaybackTime = DateTime.now();
+      _reconnectAttempts = 0; // Reset tentativas quando está funcionando
+    }
+    
+    // Detecta se o stream travou (não está reproduzindo, sem erro explícito, mas tinha reprodução recente)
+    if (!isPlaying && 
+        !hasError && 
+        !_isLoading && 
+        !_isReconnecting &&
+        _lastPlaybackTime != null) {
+      
+      final timeSinceLastPlay = DateTime.now().difference(_lastPlaybackTime!);
+      
+      // Se passou mais de 5 segundos sem reproduzir e não está pausado manualmente
+      if (timeSinceLastPlay.inSeconds > 5 && 
+          _videoController!.value.isInitialized &&
+          _reconnectAttempts < _maxReconnectAttempts) {
+        _handleStreamInterruption();
+      }
+    }
+    
+    // Detecta erro explícito
+    if (hasError && !_isReconnecting && _reconnectAttempts < _maxReconnectAttempts) {
+      _handleStreamInterruption();
+    }
+  }
+
+  /// Trata interrupção do stream com reconexão automática
+  Future<void> _handleStreamInterruption() async {
+    if (_isReconnecting || !mounted) return;
+    
+    setState(() {
+      _isReconnecting = true;
+    });
+    
+    _reconnectAttempts++;
+    
+    // Limpa controllers antigos
+    _videoController?.removeListener(_onPlayerStateChanged);
+    _videoController?.dispose();
+    _chewieController?.dispose();
+    _videoController = null;
+    _chewieController = null;
+    
+    // Aguarda um pouco antes de reconectar
+    await Future.delayed(const Duration(seconds: 2));
+    
+    // Tenta reconectar
+    if (mounted) {
+      _initializePlayer();
     }
   }
 
@@ -156,6 +239,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
     // Desativa wakelock ao sair
     WakelockPlus.disable();
     
+    // Remove listener antes de dispose
+    _videoController?.removeListener(_onPlayerStateChanged);
     _videoController?.dispose();
     _chewieController?.dispose();
     
@@ -174,15 +259,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // Player de vídeo
+          // Player de vídeo ou loading inicial (não reconexão)
           if (_chewieController != null && !_isLoading && _error == null)
             Center(
               child: Chewie(controller: _chewieController!),
             )
-          else if (_isLoading)
+          else if (_isLoading && !_isReconnecting)
             _buildLoadingState()
           else if (_error != null)
             _buildErrorState(),
+          
+          // Overlay de reconexão (simples, sobre tela preta)
+          if (_isReconnecting)
+            _buildReconnectingOverlay(),
           
           // Header com informações do canal (visível apenas em portrait)
           if (_showControls)
@@ -193,6 +282,68 @@ class _PlayerScreenState extends State<PlayerScreen> {
               child: _buildHeader(),
             ),
         ],
+      ),
+    );
+  }
+
+  /// Overlay simples de reconexão - apenas ícone de reload
+  Widget _buildReconnectingOverlay() {
+    return Container(
+      color: Colors.black.withOpacity(0.7),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Ícone de reload com animação
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                // Círculo de progresso
+                SizedBox(
+                  width: 70,
+                  height: 70,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 3,
+                    color: AppTheme.primaryColor.withOpacity(0.8),
+                  ),
+                ),
+                // Ícone de refresh
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.refresh_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            // Texto de reconexão
+            Text(
+              'Reconectando...',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+                color: Colors.white.withOpacity(0.9),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Contador de tentativas
+            Text(
+              'Tentativa $_reconnectAttempts de $_maxReconnectAttempts',
+              style: TextStyle(
+                fontSize: 12,
+                color: Colors.white.withOpacity(0.6),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

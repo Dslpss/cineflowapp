@@ -992,6 +992,7 @@ class _CastDeviceSheetState extends State<CastDeviceSheet> with SingleTickerProv
                 onPressed: () => Navigator.pop(context, true),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.white,
                 ),
                 child: const Text('Transmitir'),
               ),

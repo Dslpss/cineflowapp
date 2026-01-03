@@ -250,10 +250,14 @@ class _HomeContent extends StatelessWidget {
                 ),
               ],
             ),
-            child: const Icon(
-              Icons.play_circle_filled_rounded,
-              color: Colors.white,
-              size: 28,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                'assets/icon.png',
+                width: 32,
+                height: 32,
+                fit: BoxFit.contain,
+              ),
             ),
           ),
           const SizedBox(width: 12),
