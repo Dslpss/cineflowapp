@@ -14,8 +14,51 @@ import 'profile_screen.dart';
 import '../providers/auth_provider.dart';
 
 /// Tela principal do app - estilo Netflix/Globoplay
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _isRefreshing = false;
+  
+  Future<void> _onRefresh() async {
+    if (_isRefreshing) return;
+    
+    setState(() => _isRefreshing = true);
+    
+    final provider = context.read<ChannelProvider>();
+    final result = await provider.refreshContent();
+    
+    if (mounted) {
+      setState(() => _isRefreshing = false);
+      
+      // Mostra snackbar com resultado
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                result.success ? Icons.check_circle : Icons.error,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(child: Text(result.message)),
+            ],
+          ),
+          backgroundColor: result.success 
+            ? AppTheme.secondaryColor.withOpacity(0.9)
+            : Colors.red.withOpacity(0.9),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,11 +66,11 @@ class HomeScreen extends StatelessWidget {
       body: SafeArea(
         child: Consumer<ChannelProvider>(
           builder: (context, provider, child) {
-            if (provider.isLoading) {
+            if (provider.isLoading && provider.allChannels.isEmpty) {
               return const _LoadingState();
             }
             
-            if (provider.error != null) {
+            if (provider.error != null && provider.allChannels.isEmpty) {
               return _ErrorState(error: provider.error!);
             }
             
@@ -35,7 +78,16 @@ class HomeScreen extends StatelessWidget {
               return const _EmptyState();
             }
             
-            return _HomeContent(provider: provider);
+            return RefreshIndicator(
+              onRefresh: _onRefresh,
+              color: AppTheme.primaryColor,
+              backgroundColor: AppTheme.cardColor,
+              displacement: 40,
+              child: _HomeContent(
+                provider: provider,
+                isSyncing: provider.isSyncing || _isRefreshing,
+              ),
+            );
           },
         ),
       ),
@@ -46,8 +98,12 @@ class HomeScreen extends StatelessWidget {
 /// Conteúdo principal da home - organizado por categorias
 class _HomeContent extends StatelessWidget {
   final ChannelProvider provider;
+  final bool isSyncing;
 
-  const _HomeContent({required this.provider});
+  const _HomeContent({
+    required this.provider,
+    this.isSyncing = false,
+  });
 
   /// Categorias de canais ao vivo para mostrar na home
   List<String> get _liveChannelCategories {
@@ -261,11 +317,11 @@ class _HomeContent extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   'CineFlow',
                   style: TextStyle(
                     fontSize: 24,
@@ -273,19 +329,56 @@ class _HomeContent extends StatelessWidget {
                     color: AppTheme.textPrimary,
                   ),
                 ),
-                Text(
-                  'Premium Streaming',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.textMuted,
-                  ),
+                Row(
+                  children: [
+                    if (isSyncing) ...[
+                      const SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(AppTheme.secondaryColor),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      const Text(
+                        'Atualizando...',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.secondaryColor,
+                        ),
+                      ),
+                    ] else
+                      const Text(
+                        'Premium Streaming',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.textMuted,
+                        ),
+                      ),
+                  ],
                 ),
               ],
             ),
           ),
+          // Botão de refresh
           IconButton(
-            onPressed: () {},
-            icon: const Icon(Icons.notifications_outlined, color: AppTheme.textSecondary),
+            onPressed: isSyncing ? null : () {
+              // O refresh é feito pelo pull-to-refresh
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Puxe para baixo para atualizar'),
+                  backgroundColor: AppTheme.cardColor,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  duration: const Duration(seconds: 2),
+                ),
+              );
+            },
+            icon: Icon(
+              Icons.refresh_rounded,
+              color: isSyncing ? AppTheme.textMuted : AppTheme.textSecondary,
+            ),
           ),
           const SizedBox(width: 4),
           // Botão de Perfil

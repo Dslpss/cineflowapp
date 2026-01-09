@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import '../services/storage_service.dart';
 import '../services/cast_service.dart';
+import '../services/content_sync_service.dart';
 import '../widgets/cast_device_sheet.dart';
 import '../theme/app_theme.dart';
 import '../providers/channel_provider.dart';
@@ -106,6 +107,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       subtitle: 'Mostrar apenas canais com melhor qualidade',
                       value: true,
                       onChanged: (value) {},
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Seção de Sincronização de Conteúdo
+              SliverToBoxAdapter(
+                child: _buildSection(
+                  title: 'Sincronização',
+                  icon: Icons.sync_rounded,
+                  children: [
+                    _buildSyncStatus(),
+                    const Divider(height: 1, color: AppTheme.surfaceColor),
+                    _buildSettingAction(
+                      title: 'Atualizar conteúdo',
+                      subtitle: 'Buscar novos canais e filmes do servidor',
+                      icon: Icons.cloud_download_rounded,
+                      onTap: () => _syncContent(),
+                    ),
+                    const Divider(height: 1, color: AppTheme.surfaceColor),
+                    _buildSettingAction(
+                      title: 'Limpar cache de conteúdo',
+                      subtitle: 'Remove dados baixados e força novo download',
+                      icon: Icons.cached_rounded,
+                      onTap: () => _clearContentCache(),
                     ),
                   ],
                 ),
@@ -726,5 +752,155 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+  
+  // ===== MÉTODOS DE SINCRONIZAÇÃO =====
+  
+  Widget _buildSyncStatus() {
+    return FutureBuilder<CacheInfo>(
+      future: ContentSyncService.getCacheInfo(),
+      builder: (context, snapshot) {
+        final cacheInfo = snapshot.data;
+        final provider = context.watch<ChannelProvider>();
+        
+        String statusText;
+        String subtitleText;
+        IconData statusIcon;
+        Color statusColor;
+        
+        if (provider.isSyncing) {
+          statusText = 'Sincronizando...';
+          subtitleText = 'Buscando novos conteúdos';
+          statusIcon = Icons.sync;
+          statusColor = AppTheme.secondaryColor;
+        } else if (cacheInfo?.hasCache == true) {
+          statusText = 'Conteúdo atualizado';
+          subtitleText = 'Última sincronização: ${cacheInfo!.lastSyncFormatted}';
+          statusIcon = Icons.cloud_done_rounded;
+          statusColor = Colors.green;
+        } else {
+          statusText = 'Usando conteúdo local';
+          subtitleText = 'Nenhuma sincronização realizada';
+          statusIcon = Icons.cloud_off_rounded;
+          statusColor = AppTheme.textMuted;
+        }
+        
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: statusColor.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: provider.isSyncing
+                  ? SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(statusColor),
+                      ),
+                    )
+                  : Icon(statusIcon, size: 20, color: statusColor),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      statusText,
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitleText,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textMuted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (cacheInfo?.version.isNotEmpty == true)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'v${cacheInfo!.version}',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.primaryColor,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+  
+  Future<void> _syncContent() async {
+    final provider = context.read<ChannelProvider>();
+    
+    if (provider.isSyncing) {
+      _showSnackBar('Sincronização já em andamento...');
+      return;
+    }
+    
+    _showSnackBar('Iniciando sincronização...');
+    
+    final result = await provider.refreshContent();
+    
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(
+                result.success ? Icons.check_circle : Icons.error,
+                color: Colors.white,
+                size: 20,
+              ),
+              const SizedBox(width: 8),
+              Expanded(child: Text(result.message)),
+            ],
+          ),
+          backgroundColor: result.success 
+            ? Colors.green.withOpacity(0.9)
+            : Colors.red.withOpacity(0.9),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      
+      // Força rebuild para atualizar o status
+      setState(() {});
+    }
+  }
+  
+  Future<void> _clearContentCache() async {
+    final provider = context.read<ChannelProvider>();
+    
+    await provider.clearContentCache();
+    
+    if (mounted) {
+      setState(() {});
+      _showSnackBar('Cache de conteúdo limpo!');
+    }
   }
 }

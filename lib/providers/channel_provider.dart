@@ -4,6 +4,7 @@ import '../models/channel.dart';
 import '../models/category.dart';
 import '../services/m3u_parser.dart';
 import '../services/storage_service.dart';
+import '../services/content_sync_service.dart';
 
 /// Provider para gerenciamento de estado dos canais
 class ChannelProvider extends ChangeNotifier {
@@ -14,8 +15,14 @@ class ChannelProvider extends ChangeNotifier {
   Category? _selectedCategory;
   String _searchQuery = '';
   bool _isLoading = false;
+  bool _isSyncing = false; // Indica se está sincronizando com servidor
   String? _error;
   String _qualityFilter = 'all';
+  
+  // Informações sobre o conteúdo carregado
+  ContentSource _contentSource = ContentSource.none;
+  String _contentVersion = '';
+  DateTime? _lastSync;
 
   // Getters
   List<Channel> get allChannels => _allChannels;
@@ -24,8 +31,14 @@ class ChannelProvider extends ChangeNotifier {
   Category? get selectedCategory => _selectedCategory;
   String get searchQuery => _searchQuery;
   bool get isLoading => _isLoading;
+  bool get isSyncing => _isSyncing;
   String? get error => _error;
   String get qualityFilter => _qualityFilter;
+  
+  // Getters de sincronização
+  ContentSource get contentSource => _contentSource;
+  String get contentVersion => _contentVersion;
+  DateTime? get lastSync => _lastSync;
   
   int get totalChannels => _allChannels.length;
   int get totalCategories => _categories.length;
@@ -218,4 +231,113 @@ class ChannelProvider extends ChangeNotifier {
     await StorageService.addRecent(channel.id);
     notifyListeners(); // Atualiza UI de recentes
   }
+  
+  // ===== SINCRONIZAÇÃO DE CONTEÚDO =====
+  
+  /// Sincroniza conteúdo do servidor (método principal)
+  /// [forceRefresh] - Se true, ignora cache e busca do servidor
+  /// Retorna true se houve atualização de conteúdo
+  Future<SyncResult> syncContent({bool forceRefresh = false}) async {
+    if (_isSyncing) {
+      return SyncResult(success: false, message: 'Sincronização já em andamento');
+    }
+    
+    _isSyncing = true;
+    _error = null;
+    notifyListeners();
+    
+    try {
+      final result = await ContentSyncService.fetchContent(forceRefresh: forceRefresh);
+      
+      if (result.success && result.content.isNotEmpty) {
+        final previousCount = _rawChannels.length;
+        
+        // Processa o conteúdo
+        _rawChannels = M3UParser.parseContent(result.content);
+        _updateChannelsFromRaw();
+        
+        // Atualiza metadados
+        _contentSource = result.source;
+        _contentVersion = result.version;
+        _lastSync = DateTime.now();
+        
+        _isSyncing = false;
+        _isLoading = false;
+        
+        Future.microtask(() => notifyListeners());
+        
+        final newCount = _rawChannels.length;
+        final diff = newCount - previousCount;
+        
+        String message;
+        if (previousCount == 0) {
+          message = '$newCount canais carregados';
+        } else if (diff > 0) {
+          message = '$diff novos canais adicionados';
+        } else if (diff < 0) {
+          message = '${-diff} canais removidos';
+        } else {
+          message = 'Conteúdo já está atualizado';
+        }
+        
+        return SyncResult(
+          success: true,
+          message: message,
+          source: result.source,
+          channelsLoaded: newCount,
+          newChannels: diff > 0 ? diff : 0,
+        );
+      } else {
+        _isSyncing = false;
+        _error = result.error ?? 'Falha ao carregar conteúdo';
+        Future.microtask(() => notifyListeners());
+        
+        return SyncResult(
+          success: false,
+          message: result.error ?? 'Falha ao carregar conteúdo',
+        );
+      }
+    } catch (e) {
+      _isSyncing = false;
+      _error = 'Erro na sincronização: $e';
+      Future.microtask(() => notifyListeners());
+      
+      return SyncResult(success: false, message: 'Erro: $e');
+    }
+  }
+  
+  /// Força atualização do conteúdo (ignora cache)
+  Future<SyncResult> refreshContent() async {
+    return syncContent(forceRefresh: true);
+  }
+  
+  /// Retorna informações do cache atual
+  Future<CacheInfo> getCacheInfo() async {
+    return ContentSyncService.getCacheInfo();
+  }
+  
+  /// Limpa cache de conteúdo
+  Future<void> clearContentCache() async {
+    await ContentSyncService.clearCache();
+    _contentVersion = '';
+    _lastSync = null;
+    notifyListeners();
+  }
+}
+
+/// Resultado da sincronização
+class SyncResult {
+  final bool success;
+  final String message;
+  final ContentSource? source;
+  final int channelsLoaded;
+  final int newChannels;
+  
+  SyncResult({
+    required this.success,
+    required this.message,
+    this.source,
+    this.channelsLoaded = 0,
+    this.newChannels = 0,
+  });
 }

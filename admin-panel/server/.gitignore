@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Firebase credentials (KEEP PRIVATE!)
+serviceAccountKey.json
+*-firebase-adminsdk-*.json
+
+# Uploads (APK files)
+uploads/
+
+# Data files (M3U - too large and sensitive)
+data/*.m3u
+data/*.m3u8
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/

@@ -196,6 +196,99 @@ app.get('/api/app-info', async (req, res) => {
 });
 
 // ==========================================
+// ROTAS DE CONTEÚDO (M3U)
+// ==========================================
+
+// Pasta de dados
+const DATA_DIR = path.join(__dirname, 'data');
+if (!fs.existsSync(DATA_DIR)) {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+}
+
+// Verifica versão do conteúdo
+app.get('/api/content/version', (req, res) => {
+  try {
+    const versionPath = path.join(DATA_DIR, 'content-version.json');
+    
+    if (!fs.existsSync(versionPath)) {
+      return res.json({ 
+        version: '0',
+        updatedAt: null,
+        description: 'Nenhuma versão disponível'
+      });
+    }
+    
+    const versionData = JSON.parse(fs.readFileSync(versionPath, 'utf8'));
+    res.json(versionData);
+  } catch (error) {
+    console.error('Erro ao ler versão do conteúdo:', error);
+    res.status(500).json({ error: 'Erro ao verificar versão' });
+  }
+});
+
+// Baixa o arquivo M3U
+app.get('/api/content/m3u', (req, res) => {
+  try {
+    const m3uPath = path.join(DATA_DIR, 'canais.m3u');
+    
+    if (!fs.existsSync(m3uPath)) {
+      console.log('⚠️ Arquivo canais.m3u não encontrado em:', m3uPath);
+      return res.status(404).json({ 
+        error: 'Arquivo de canais não disponível',
+        hint: 'Faça upload do canais.m3u para a pasta data/'
+      });
+    }
+    
+    const stat = fs.statSync(m3uPath);
+    console.log(`📺 Servindo canais.m3u (${(stat.size / 1024 / 1024).toFixed(2)} MB)`);
+    
+    res.setHeader('Content-Type', 'audio/x-mpegurl');
+    res.setHeader('Content-Length', stat.size);
+    res.setHeader('Cache-Control', 'no-cache');
+    
+    const readStream = fs.createReadStream(m3uPath);
+    readStream.pipe(res);
+  } catch (error) {
+    console.error('Erro ao servir M3U:', error);
+    res.status(500).json({ error: 'Erro ao carregar conteúdo' });
+  }
+});
+
+// Info do conteúdo
+app.get('/api/content/info', (req, res) => {
+  try {
+    const m3uPath = path.join(DATA_DIR, 'canais.m3u');
+    const versionPath = path.join(DATA_DIR, 'content-version.json');
+    
+    const m3uExists = fs.existsSync(m3uPath);
+    let fileInfo = null;
+    let versionInfo = null;
+    
+    if (m3uExists) {
+      const stat = fs.statSync(m3uPath);
+      fileInfo = {
+        size: stat.size,
+        sizeFormatted: (stat.size / (1024 * 1024)).toFixed(2) + ' MB',
+        lastModified: stat.mtime
+      };
+    }
+    
+    if (fs.existsSync(versionPath)) {
+      versionInfo = JSON.parse(fs.readFileSync(versionPath, 'utf8'));
+    }
+    
+    res.json({
+      available: m3uExists,
+      file: fileInfo,
+      version: versionInfo
+    });
+  } catch (error) {
+    console.error('Erro ao verificar conteúdo:', error);
+    res.status(500).json({ error: 'Erro ao verificar conteúdo' });
+  }
+});
+
+// ==========================================
 // ROTAS ADMIN (PROTEGIDAS)
 // ==========================================
 

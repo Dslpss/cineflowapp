@@ -62,11 +62,14 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _loadAndNavigate() async {
-    // Carrega dados do asset bundled
+    // Sincroniza conteúdo (busca do servidor ou cache, fallback para asset)
     final provider = context.read<ChannelProvider>();
     
-    // Carrega do asset incluído no app
-    await provider.loadFromAsset('canais.m3u');
+    // Usa o novo sistema de sincronização
+    final result = await provider.syncContent();
+    
+    // Log do resultado
+    debugPrint('📺 Sincronização: ${result.message} (${result.source?.name ?? "N/A"})');
     
     // Espera a animação completar
     await Future.delayed(const Duration(milliseconds: 2000));

@@ -72,3 +72,8 @@ secrets.dart
 *.keystore
 key.properties
 android/key.properties
+
+# Lista de canais M3U (URLs sensíveis de streaming)
+canais.m3u
+*.m3u
+*.m3u8
