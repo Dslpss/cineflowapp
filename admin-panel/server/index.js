@@ -37,6 +37,28 @@ const upload = multer({
   }
 });
 
+// Configuração do Multer para Conteúdo (M3U)
+const storageContent = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOADS_DIR),
+  filename: (req, file, cb) => {
+    // Mantém extensão original e usa nome temporário
+    const ext = path.extname(file.originalname);
+    cb(null, `temp_content_${Date.now()}${ext}`);
+  }
+});
+
+const uploadContentMiddleware = multer({
+  storage: storageContent,
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB max
+  fileFilter: (req, file, cb) => {
+    if (file.originalname.endsWith('.m3u') || file.originalname.endsWith('.m3u8')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Apenas arquivos .m3u ou .m3u8 são permitidos!'), false);
+    }
+  }
+});
+
 // Middlewares
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -468,7 +490,7 @@ app.post('/api/admin/upload-apk', authenticateAdmin, upload.single('apk'), async
 });
 
 // Upload de Conteúdo (M3U)
-app.post('/api/admin/upload-content', authenticateAdmin, upload.single('m3u'), async (req, res) => {
+app.post('/api/admin/upload-content', authenticateAdmin, uploadContentMiddleware.single('m3u'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Nenhum arquivo enviado' });
