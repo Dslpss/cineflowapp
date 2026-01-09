@@ -61,6 +61,10 @@
           <span class="material-icons-round">system_update</span>
           Atualizações
         </a>
+        <a href="#" class="nav-item" data-section="content">
+          <span class="material-icons-round">playlist_play</span>
+          Conteúdo
+        </a>
         <a href="#" class="nav-item" data-section="settings">
           <span class="material-icons-round">settings</span>
           Configurações
@@ -273,6 +277,75 @@
               Salvar Configurações
             </button>
           </form>
+        </div>
+      </section>
+      
+      <!-- Seção Conteúdo -->
+      <section id="section-content" class="section">
+        <header class="section-header">
+          <h2>Gerenciar Conteúdo</h2>
+          <p>Atualize a lista de canais, filmes e séries (M3U)</p>
+        </header>
+        
+        <!-- Card de Upload de M3U -->
+        <div class="update-card" style="margin-bottom: 24px;">
+          <h3>
+            <span class="material-icons-round">playlist_add</span>
+            Upload de Lista de Canais (M3U)
+          </h3>
+          
+          <!-- Área de Drop M3U -->
+          <div id="drop-zone-m3u" class="drop-zone">
+            <span class="material-icons-round" style="font-size: 48px; color: var(--primary);">playlist_add_check</span>
+            <p>Arraste o arquivo .m3u ou .m3u8 aqui ou <span style="color: var(--secondary); cursor: pointer;" onclick="document.getElementById('m3u-file').click()">clique para selecionar</span></p>
+            <p style="font-size: 12px; color: var(--text-muted);">Apenas arquivos .m3u ou .m3u8</p>
+            <input type="file" id="m3u-file" accept=".m3u,.m3u8" style="display: none;">
+          </div>
+          
+          <!-- Info do arquivo selecionado -->
+          <div id="m3u-file-info" class="file-info" style="display: none;">
+            <div class="file-details">
+              <span class="material-icons-round">list</span>
+              <div>
+                <strong id="m3u-file-name">lista.m3u</strong>
+                <span id="m3u-file-size">0 MB</span>
+              </div>
+            </div>
+            <button class="btn-remove" onclick="removeM3UFile()">
+              <span class="material-icons-round">close</span>
+            </button>
+          </div>
+          
+          <!-- Descrição da atualização -->
+          <div class="form-group" style="margin-top: 16px;">
+            <label for="content-description">Descrição da Atualização</label>
+            <input type="text" id="content-description" placeholder="Ex: Novos canais adicionados, correção de links...">
+          </div>
+          
+          <!-- Progress bar -->
+          <div id="m3u-upload-progress" class="progress-container" style="display: none;">
+            <div class="progress-bar">
+              <div class="progress-fill" id="m3u-progress-fill"></div>
+            </div>
+            <span id="m3u-progress-text">0%</span>
+          </div>
+          
+          <button type="button" class="btn-primary" id="m3u-upload-btn" onclick="uploadContent()" style="margin-top: 16px;">
+            <span class="material-icons-round">cloud_upload</span>
+            Atualizar Conteúdo
+          </button>
+        </div>
+        
+        <!-- Info Versão Atual -->
+        <div class="update-card">
+          <h3>
+            <span class="material-icons-round">info</span>
+            Versão Atual do Conteúdo
+          </h3>
+          
+          <div id="current-content-info">
+            <p style="color: var(--text-muted);">Carregando...</p>
+          </div>
         </div>
       </section>
       

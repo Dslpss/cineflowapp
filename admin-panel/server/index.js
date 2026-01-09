@@ -467,6 +467,57 @@ app.post('/api/admin/upload-apk', authenticateAdmin, upload.single('apk'), async
   }
 });
 
+// Upload de Conteúdo (M3U)
+app.post('/api/admin/upload-content', authenticateAdmin, upload.single('m3u'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+    }
+    
+    // Move o arquivo para a pasta data
+    const tempPath = req.file.path;
+    const targetPath = path.join(DATA_DIR, 'canais.m3u');
+    
+    // Se o arquivo tiver outro nome ou extensão, renomeia
+    fs.renameSync(tempPath, targetPath);
+    
+    const fileSize = req.file.size;
+    const fileSizeFormatted = (fileSize / (1024 * 1024)).toFixed(2) + ' MB';
+    
+    // Atualiza versão do conteúdo
+    const now = new Date();
+    const versionStr = `${now.getFullYear()}.${(now.getMonth() + 1).toString().padStart(2, '0')}.${now.getDate().toString().padStart(2, '0')}.${now.getHours()}${now.getMinutes()}`;
+    
+    const versionData = {
+      version: versionStr,
+      updatedAt: now.toISOString(),
+      description: req.body.description || 'Atualização de conteúdo',
+      size: fileSizeFormatted
+    };
+    
+    fs.writeFileSync(path.join(DATA_DIR, 'content-version.json'), JSON.stringify(versionData, null, 2));
+    
+    // Log de auditoria
+    await db.collection('admin_logs').add({
+      action: 'UPLOAD_CONTENT',
+      data: { version: versionStr, size: fileSizeFormatted },
+      adminEmail: req.user.email,
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    });
+    
+    console.log(`📺 Content uploaded: ${fileSizeFormatted} (v${versionStr}) by ${req.user.email}`);
+    
+    res.json({ 
+      success: true, 
+      message: 'Conteúdo atualizado com sucesso!',
+      version: versionData
+    });
+  } catch (error) {
+    console.error('Erro ao fazer upload de conteúdo:', error);
+    res.status(500).json({ error: 'Erro ao fazer upload de conteúdo' });
+  }
+});
+
 // Estatísticas gerais
 app.get('/api/admin/stats', authenticateAdmin, async (req, res) => {
   try {

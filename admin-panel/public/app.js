@@ -124,6 +124,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
     if (section === 'dashboard') loadDashboard();
     if (section === 'users') loadUsers();
     if (section === 'updates') loadAppConfig();
+    if (section === 'content') loadContentInfo();
   });
 });
 
@@ -317,6 +318,178 @@ async function unblockUser(uid) {
   } catch (error) {
     console.error('Erro ao desbloquear:', error);
     showToast('Erro ao desbloquear usuário', 'error');
+  }
+}
+
+// ============================================
+// Gerenciamento de Conteúdo (M3U)
+// ============================================
+
+async function loadContentInfo() {
+  const container = document.getElementById('current-content-info');
+  container.innerHTML = '<p style="color: var(--text-muted);">Carregando informações...</p>';
+  
+  try {
+    const response = await fetch(`${API_URL}/api/content/info`);
+    const info = await response.json();
+    
+    if (info.available) {
+      container.innerHTML = `
+        <div class="apk-status available" style="border-left-color: var(--secondary);">
+          <span class="material-icons-round" style="color: var(--secondary);">playlist_play</span>
+          <div class="apk-details">
+            <h4>Lista de Canais (v${info.version?.version || 'N/A'})</h4>
+            <p>Tamanho: ${info.file.sizeFormatted} • Atualizado: ${formatDate(info.file.lastModified)}</p>
+            <p style="font-size: 12px; margin-top: 4px; color: var(--text-muted);">${info.version?.description || ''}</p>
+          </div>
+          <a href="${API_URL}/api/content/m3u" class="btn-download" target="_blank" style="background-color: var(--secondary);">
+            <span class="material-icons-round">download</span>
+            Baixar
+          </a>
+        </div>
+      `;
+    } else {
+      container.innerHTML = `
+        <div class="apk-status">
+          <span class="material-icons-round" style="color: var(--text-muted);">playlist_remove</span>
+          <div class="apk-details">
+            <h4>Nenhum conteúdo disponível</h4>
+            <p>Faça upload de um arquivo .m3u para disponibilizar canais no app.</p>
+          </div>
+        </div>
+      `;
+    }
+  } catch (error) {
+    console.error('Erro ao carregar info de conteúdo:', error);
+    container.innerHTML = '<p style="color: var(--text-muted);">Erro ao carregar informações</p>';
+  }
+}
+
+// Upload M3U Logic
+let selectedM3UFile = null;
+
+const m3uDropZone = document.getElementById('drop-zone-m3u');
+const m3uFileInput = document.getElementById('m3u-file');
+
+// Drag & Drop
+m3uDropZone.addEventListener('dragover', (e) => {
+  e.preventDefault();
+  m3uDropZone.classList.add('dragover');
+});
+
+m3uDropZone.addEventListener('dragleave', () => {
+  m3uDropZone.classList.remove('dragover');
+});
+
+m3uDropZone.addEventListener('drop', (e) => {
+  e.preventDefault();
+  m3uDropZone.classList.remove('dragover');
+  
+  const file = e.dataTransfer.files[0];
+  if (file && (file.name.endsWith('.m3u') || file.name.endsWith('.m3u8'))) {
+    handleM3USelect(file);
+  } else {
+    showToast('Apenas arquivos .m3u ou .m3u8 são permitidos', 'error');
+  }
+});
+
+m3uFileInput.addEventListener('change', (e) => {
+  if (e.target.files[0]) {
+    handleM3USelect(e.target.files[0]);
+  }
+});
+
+function handleM3USelect(file) {
+  selectedM3UFile = file;
+  
+  const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+  document.getElementById('m3u-file-name').textContent = file.name;
+  document.getElementById('m3u-file-size').textContent = sizeMB + ' MB';
+  
+  document.getElementById('drop-zone-m3u').style.display = 'none';
+  document.getElementById('m3u-file-info').style.display = 'flex';
+}
+
+function removeM3UFile() {
+  selectedM3UFile = null;
+  m3uFileInput.value = '';
+  document.getElementById('drop-zone-m3u').style.display = 'block';
+  document.getElementById('m3u-file-info').style.display = 'none';
+}
+
+async function uploadContent() {
+  if (!selectedM3UFile) {
+    showToast('Selecione um arquivo M3U primeiro', 'error');
+    return;
+  }
+  
+  const description = document.getElementById('content-description').value;
+  const uploadBtn = document.getElementById('m3u-upload-btn');
+  const progressContainer = document.getElementById('m3u-upload-progress');
+  const progressFill = document.getElementById('m3u-progress-fill');
+  const progressText = document.getElementById('m3u-progress-text');
+  
+  // UI Loading
+  progressContainer.style.display = 'flex';
+  uploadBtn.disabled = true;
+  uploadBtn.innerHTML = '<span class="material-icons-round">hourglass_empty</span> Enviando...';
+  
+  const formData = new FormData();
+  formData.append('m3u', selectedM3UFile);
+  formData.append('description', description);
+  
+  try {
+    const xhr = new XMLHttpRequest();
+    
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) {
+        const percent = Math.round((e.loaded / e.total) * 100);
+        progressFill.style.width = percent + '%';
+        progressText.textContent = percent + '%';
+      }
+    });
+    
+    xhr.onload = function() {
+      if (xhr.status === 200) {
+        const response = JSON.parse(xhr.responseText);
+        showToast('Conteúdo atualizado com sucesso!', 'success');
+        
+        // Reset
+        removeM3UFile();
+        document.getElementById('content-description').value = '';
+        loadContentInfo();
+      } else {
+        try {
+          const error = JSON.parse(xhr.responseText);
+          showToast(error.error || 'Erro ao enviar conteúdo', 'error');
+        } catch {
+          showToast('Erro ao enviar conteúdo', 'error');
+        }
+      }
+      
+      uploadBtn.disabled = false;
+      uploadBtn.innerHTML = '<span class="material-icons-round">cloud_upload</span> Atualizar Conteúdo';
+      progressContainer.style.display = 'none';
+      progressFill.style.width = '0%';
+    };
+    
+    xhr.onerror = function() {
+      showToast('Erro de conexão ao enviar conteúdo', 'error');
+      uploadBtn.disabled = false;
+      uploadBtn.innerHTML = '<span class="material-icons-round">cloud_upload</span> Atualizar Conteúdo';
+      progressContainer.style.display = 'none';
+    };
+    
+    xhr.open('POST', `${API_URL}/api/admin/upload-content`);
+    xhr.setRequestHeader('Authorization', `Bearer ${authToken}`);
+    xhr.send(formData);
+    
+  } catch (error) {
+    console.error('Erro no upload:', error);
+    showToast('Erro ao fazer upload', 'error');
+    uploadBtn.disabled = false;
+    uploadBtn.innerHTML = '<span class="material-icons-round">cloud_upload</span> Atualizar Conteúdo';
+    progressContainer.style.display = 'none';
   }
 }
 

@@ -13,7 +13,7 @@ serviceAccountKey.json
 # Uploads (APK files)
 uploads/
 
-# Data files (M3U - too large and sensitive)
+# Data files
 data/*.m3u
 data/*.m3u8
 
