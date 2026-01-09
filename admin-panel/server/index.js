@@ -478,8 +478,9 @@ app.post('/api/admin/upload-content', authenticateAdmin, upload.single('m3u'), a
     const tempPath = req.file.path;
     const targetPath = path.join(DATA_DIR, 'canais.m3u');
     
-    // Se o arquivo tiver outro nome ou extensão, renomeia
-    fs.renameSync(tempPath, targetPath);
+    // Usa copy + unlink em vez de rename para evitar erro EXDEV (cross-device link)
+    fs.copyFileSync(tempPath, targetPath);
+    fs.unlinkSync(tempPath);
     
     const fileSize = req.file.size;
     const fileSizeFormatted = (fileSize / (1024 * 1024)).toFixed(2) + ' MB';
