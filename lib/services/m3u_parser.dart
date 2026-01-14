@@ -61,11 +61,13 @@ class M3UParser {
       
       // Extrai group-title
       final groupMatch = RegExp(r'group-title="([^"]*)"').firstMatch(extInf);
-      final category = groupMatch?.group(1) ?? 'Outros';
+      final rawCategory = groupMatch?.group(1) ?? 'Outros';
+      final category = _fixEncoding(rawCategory);
       
       // Extrai o nome de exibição (após a última vírgula)
       final displayNameMatch = RegExp(r',([^,]+)$').firstMatch(extInf);
-      final displayName = displayNameMatch?.group(1)?.trim() ?? tvgName;
+      final rawDisplayName = displayNameMatch?.group(1)?.trim() ?? tvgName;
+      final displayName = _fixEncoding(rawDisplayName);
       
       if (displayName.isEmpty || streamUrl.isEmpty) {
         return null;
@@ -82,6 +84,37 @@ class M3UParser {
     } catch (e) {
       return null;
     }
+  }
+
+  /// Corrige problemas de encoding comuns (UTF-8 interpretado como Latin-1)
+  static String _fixEncoding(String input) {
+    if (input.isEmpty) return input;
+    
+    var output = input;
+    
+    // Mapa de correções comuns de Mojibake
+    const replacements = {
+      'Ã¡': 'á', 'Ã ': 'à', 'Ã¢': 'â', 'Ã£': 'ã', 'Ã¤': 'ä',
+      'Ã©': 'é', 'Ã¨': 'è', 'Ãª': 'ê', 'Ã«': 'ë',
+      'Ã­': 'í', 'Ã¬': 'ì', 'Ã®': 'î', 'Ã¯': 'ï',
+      'Ã³': 'ó', 'Ã²': 'ò', 'Ã´': 'ô', 'Ãµ': 'õ', 'Ã¶': 'ö',
+      'Ãº': 'ú', 'Ã¹': 'ù', 'Ã»': 'û', 'Ã¼': 'ü',
+      'Ã§': 'ç', 'Ã±': 'ñ',
+      'Ã': 'Á', 'Ã€': 'À', 'Ã‚': 'Â', 'Ãƒ': 'Ã', 'Ã„': 'Ä',
+      'Ã‰': 'É', 'Ãˆ': 'È', 'ÃŠ': 'Ê', 'Ã‹': 'Ë',
+      'Ã': 'Í', 'ÃŒ': 'Ì', 'ÃŽ': 'Î', 'Ã': 'Ï',
+      'Ã“': 'Ó', 'Ã’': 'Ò', 'Ã”': 'Ô', 'Ã•': 'Õ', 'Ã–': 'Ö',
+      'Ãš': 'Ú', 'Ã™': 'Ù', 'Ã›': 'Û', 'Ãœ': 'Ü',
+      'Ã‡': 'Ç', 'Ã‘': 'Ñ',
+      // Caracteres especiais
+      'Â': '', // Espaço não separável (frequentemente lixo)
+    };
+
+    replacements.forEach((key, value) {
+      output = output.replaceAll(key, value);
+    });
+
+    return output;
   }
 
   /// Agrupa canais por categoria

@@ -50,172 +50,170 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: AppTheme.backgroundColor,
       body: SafeArea(
         child: CustomScrollView(
-            slivers: [
-              // Header
-              SliverToBoxAdapter(
-                child: _buildHeader(),
+          slivers: [
+            // Header
+            SliverToBoxAdapter(child: _buildHeader()),
+
+            // Perfil
+            SliverToBoxAdapter(child: _buildProfileCard()),
+
+            // Seção de reprodução
+            SliverToBoxAdapter(
+              child: _buildSection(
+                title: 'Reprodução',
+                icon: Icons.play_circle_outline_rounded,
+                children: [
+                  _buildQualitySelector(),
+                  const Divider(height: 1, color: AppTheme.surfaceColor),
+                  _buildSettingSwitch(
+                    title: 'Reprodução automática',
+                    subtitle: 'Iniciar reprodução ao selecionar',
+                    value: true,
+                    onChanged: (value) {},
+                  ),
+                ],
               ),
-              
-              // Perfil
-              SliverToBoxAdapter(
-                child: _buildProfileCard(),
+            ),
+
+            // Seção de conteúdo
+            SliverToBoxAdapter(
+              child: _buildSection(
+                title: 'Conteúdo',
+                icon: Icons.filter_list_rounded,
+                children: [
+                  _buildSettingSwitch(
+                    title: 'Mostrar conteúdo adulto',
+                    subtitle: 'Exibir categoria de conteúdo +18',
+                    value: _showAdultContent,
+                    onChanged: (value) async {
+                      await StorageService.setShowAdultContent(value);
+                      setState(() {
+                        _showAdultContent = value;
+                      });
+
+                      // Notifica o provider para atualizar a lista
+                      if (mounted) {
+                        context
+                            .read<ChannelProvider>()
+                            .updateAdultContentVisibility();
+                      }
+                    },
+                  ),
+                  const Divider(height: 1, color: AppTheme.surfaceColor),
+                  _buildSettingSwitch(
+                    title: 'Remover duplicados',
+                    subtitle: 'Mostrar apenas canais com melhor qualidade',
+                    value: true,
+                    onChanged: (value) {},
+                  ),
+                ],
               ),
-              
-              // Seção de reprodução
-              SliverToBoxAdapter(
-                child: _buildSection(
-                  title: 'Reprodução',
-                  icon: Icons.play_circle_outline_rounded,
-                  children: [
-                    _buildQualitySelector(),
-                    const Divider(height: 1, color: AppTheme.surfaceColor),
-                    _buildSettingSwitch(
-                      title: 'Reprodução automática',
-                      subtitle: 'Iniciar reprodução ao selecionar',
-                      value: true,
-                      onChanged: (value) {},
-                    ),
-                  ],
-                ),
+            ),
+
+            // Seção de Sincronização de Conteúdo
+            SliverToBoxAdapter(
+              child: _buildSection(
+                title: 'Sincronização',
+                icon: Icons.sync_rounded,
+                children: [
+                  _buildSyncStatus(),
+                  const Divider(height: 1, color: AppTheme.surfaceColor),
+                  _buildSettingAction(
+                    title: 'Atualizar conteúdo',
+                    subtitle: 'Buscar novos canais e filmes do servidor',
+                    icon: Icons.cloud_download_rounded,
+                    onTap: () => _syncContent(),
+                  ),
+                  const Divider(height: 1, color: AppTheme.surfaceColor),
+                  _buildSettingAction(
+                    title: 'Limpar cache de conteúdo',
+                    subtitle: 'Remove dados baixados e força novo download',
+                    icon: Icons.cached_rounded,
+                    onTap: () => _clearContentCache(),
+                  ),
+                ],
               ),
-              
-              // Seção de conteúdo
-              SliverToBoxAdapter(
-                child: _buildSection(
-                  title: 'Conteúdo',
-                  icon: Icons.filter_list_rounded,
-                  children: [
-                    _buildSettingSwitch(
-                      title: 'Mostrar conteúdo adulto',
-                      subtitle: 'Exibir categoria de conteúdo +18',
-                      value: _showAdultContent,
-                      onChanged: (value) async {
-                        await StorageService.setShowAdultContent(value);
-                        setState(() {
-                          _showAdultContent = value;
-                        });
-                        
-                        // Notifica o provider para atualizar a lista
-                        if (mounted) {
-                          context.read<ChannelProvider>().updateAdultContentVisibility();
-                        }
-                      },
-                    ),
-                    const Divider(height: 1, color: AppTheme.surfaceColor),
-                    _buildSettingSwitch(
-                      title: 'Remover duplicados',
-                      subtitle: 'Mostrar apenas canais com melhor qualidade',
-                      value: true,
-                      onChanged: (value) {},
-                    ),
-                  ],
-                ),
+            ),
+
+            // Seção de Cast/TV
+            SliverToBoxAdapter(
+              child: _buildSection(
+                title: 'Transmitir para TV',
+                icon: Icons.cast_rounded,
+                children: [
+                  _buildCastStatus(),
+                  const Divider(height: 1, color: AppTheme.surfaceColor),
+                  _buildSettingAction(
+                    title: 'Gerenciar dispositivos',
+                    subtitle: 'Conectar ou desconectar da TV',
+                    icon: Icons.settings_remote_rounded,
+                    onTap: () {
+                      CastDeviceSheet.show(context);
+                    },
+                  ),
+                ],
               ),
-              
-              // Seção de Sincronização de Conteúdo
-              SliverToBoxAdapter(
-                child: _buildSection(
-                  title: 'Sincronização',
-                  icon: Icons.sync_rounded,
-                  children: [
-                    _buildSyncStatus(),
-                    const Divider(height: 1, color: AppTheme.surfaceColor),
-                    _buildSettingAction(
-                      title: 'Atualizar conteúdo',
-                      subtitle: 'Buscar novos canais e filmes do servidor',
-                      icon: Icons.cloud_download_rounded,
-                      onTap: () => _syncContent(),
-                    ),
-                    const Divider(height: 1, color: AppTheme.surfaceColor),
-                    _buildSettingAction(
-                      title: 'Limpar cache de conteúdo',
-                      subtitle: 'Remove dados baixados e força novo download',
-                      icon: Icons.cached_rounded,
-                      onTap: () => _clearContentCache(),
-                    ),
-                  ],
-                ),
+            ),
+
+            // Seção de armazenamento
+            SliverToBoxAdapter(
+              child: _buildSection(
+                title: 'Armazenamento',
+                icon: Icons.storage_rounded,
+                children: [
+                  _buildSettingAction(
+                    title: 'Limpar histórico',
+                    subtitle: 'Remove canais assistidos recentemente',
+                    icon: Icons.history_rounded,
+                    onTap: () async {
+                      await StorageService.clearRecents();
+                      _showSnackBar('Histórico limpo com sucesso!');
+                    },
+                  ),
+                  const Divider(height: 1, color: AppTheme.surfaceColor),
+                  _buildSettingAction(
+                    title: 'Limpar todos os dados',
+                    subtitle: 'Remove favoritos, histórico e configurações',
+                    icon: Icons.delete_forever_rounded,
+                    isDestructive: true,
+                    onTap: () => _showClearDataDialog(),
+                  ),
+                ],
               ),
-              
-              // Seção de Cast/TV
-              SliverToBoxAdapter(
-                child: _buildSection(
-                  title: 'Transmitir para TV',
-                  icon: Icons.cast_rounded,
-                  children: [
-                    _buildCastStatus(),
-                    const Divider(height: 1, color: AppTheme.surfaceColor),
-                    _buildSettingAction(
-                      title: 'Gerenciar dispositivos',
-                      subtitle: 'Conectar ou desconectar da TV',
-                      icon: Icons.settings_remote_rounded,
-                      onTap: () {
-                        CastDeviceSheet.show(context);
-                      },
-                    ),
-                  ],
-                ),
+            ),
+
+            // Seção sobre
+            SliverToBoxAdapter(
+              child: _buildSection(
+                title: 'Sobre',
+                icon: Icons.info_outline_rounded,
+                children: [
+                  _buildInfoItem('Versão', _appVersion),
+                  const Divider(height: 1, color: AppTheme.surfaceColor),
+                  _buildInfoItem('Desenvolvido por', 'CineFlow Team'),
+                  const Divider(height: 1, color: AppTheme.surfaceColor),
+                  _buildSettingAction(
+                    title: 'Licenças de código aberto',
+                    subtitle: 'Ver bibliotecas utilizadas',
+                    icon: Icons.code_rounded,
+                    onTap: () {
+                      showLicensePage(
+                        context: context,
+                        applicationName: 'CineFlow',
+                        applicationVersion: _appVersion,
+                        applicationLegalese:
+                            '© ${DateTime.now().year} CineFlow',
+                      );
+                    },
+                  ),
+                ],
               ),
-              
-              // Seção de armazenamento
-              SliverToBoxAdapter(
-                child: _buildSection(
-                  title: 'Armazenamento',
-                  icon: Icons.storage_rounded,
-                  children: [
-                    _buildSettingAction(
-                      title: 'Limpar histórico',
-                      subtitle: 'Remove canais assistidos recentemente',
-                      icon: Icons.history_rounded,
-                      onTap: () async {
-                        await StorageService.clearRecents();
-                        _showSnackBar('Histórico limpo com sucesso!');
-                      },
-                    ),
-                    const Divider(height: 1, color: AppTheme.surfaceColor),
-                    _buildSettingAction(
-                      title: 'Limpar todos os dados',
-                      subtitle: 'Remove favoritos, histórico e configurações',
-                      icon: Icons.delete_forever_rounded,
-                      isDestructive: true,
-                      onTap: () => _showClearDataDialog(),
-                    ),
-                  ],
-                ),
-              ),
-              
-              // Seção sobre
-              SliverToBoxAdapter(
-                child: _buildSection(
-                  title: 'Sobre',
-                  icon: Icons.info_outline_rounded,
-                  children: [
-                    _buildInfoItem('Versão', _appVersion),
-                    const Divider(height: 1, color: AppTheme.surfaceColor),
-                    _buildInfoItem('Desenvolvido por', 'CineFlow Team'),
-                    const Divider(height: 1, color: AppTheme.surfaceColor),
-                    _buildSettingAction(
-                      title: 'Licenças de código aberto',
-                      subtitle: 'Ver bibliotecas utilizadas',
-                      icon: Icons.code_rounded,
-                      onTap: () {
-                        showLicensePage(
-                          context: context,
-                          applicationName: 'CineFlow',
-                          applicationVersion: '1.0.0',
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              
-              // Espaço no final
-              const SliverToBoxAdapter(
-                child: SizedBox(height: 100),
-              ),
-            ],
-          ),
+            ),
+
+            // Espaço no final
+            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          ],
+        ),
       ),
     );
   }
@@ -263,10 +261,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 SizedBox(height: 4),
                 Text(
                   'Personalize sua experiência',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: AppTheme.textMuted,
-                  ),
+                  style: TextStyle(fontSize: 14, color: AppTheme.textMuted),
                 ),
               ],
             ),
@@ -288,9 +283,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
         borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-        border: Border.all(
-          color: AppTheme.primaryColor.withOpacity(0.3),
-        ),
+        border: Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -396,9 +389,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             decoration: BoxDecoration(
               color: AppTheme.cardColor,
               borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-              border: Border.all(
-                color: AppTheme.textMuted.withOpacity(0.1),
-              ),
+              border: Border.all(color: AppTheme.textMuted.withOpacity(0.1)),
             ),
             child: Column(children: children),
           ),
@@ -409,7 +400,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildQualitySelector() {
     final qualities = ['SD', 'HD', 'FHD', '4K'];
-    
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -426,50 +417,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 4),
           const Text(
             'Selecione a qualidade padrão de reprodução',
-            style: TextStyle(
-              fontSize: 12,
-              color: AppTheme.textMuted,
-            ),
+            style: TextStyle(fontSize: 12, color: AppTheme.textMuted),
           ),
           const SizedBox(height: 12),
           Row(
-            children: qualities.map((quality) {
-              final isSelected = _preferredQuality == quality;
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () async {
-                    await StorageService.setPreferredQuality(quality);
-                    setState(() {
-                      _preferredQuality = quality;
-                    });
-                  },
-                  child: Container(
-                    margin: const EdgeInsets.only(right: 8),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    decoration: BoxDecoration(
-                      gradient: isSelected ? AppTheme.primaryGradient : null,
-                      color: isSelected ? null : AppTheme.surfaceColor,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: isSelected
-                            ? Colors.transparent
-                            : AppTheme.textMuted.withOpacity(0.2),
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        quality,
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: isSelected ? Colors.white : AppTheme.textSecondary,
+            children:
+                qualities.map((quality) {
+                  final isSelected = _preferredQuality == quality;
+                  return Expanded(
+                    child: GestureDetector(
+                      onTap: () async {
+                        await StorageService.setPreferredQuality(quality);
+                        setState(() {
+                          _preferredQuality = quality;
+                        });
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(vertical: 10),
+                        decoration: BoxDecoration(
+                          gradient:
+                              isSelected ? AppTheme.primaryGradient : null,
+                          color: isSelected ? null : AppTheme.surfaceColor,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color:
+                                isSelected
+                                    ? Colors.transparent
+                                    : AppTheme.textMuted.withOpacity(0.2),
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            quality,
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color:
+                                  isSelected
+                                      ? Colors.white
+                                      : AppTheme.textSecondary,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ),
-              );
-            }).toList(),
+                  );
+                }).toList(),
           ),
         ],
       ),
@@ -588,10 +582,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Text(
             label,
-            style: const TextStyle(
-              fontSize: 14,
-              color: AppTheme.textSecondary,
-            ),
+            style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary),
           ),
           Text(
             value,
@@ -608,7 +599,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildCastStatus() {
     final castService = CastService();
-    
+
     return ListenableBuilder(
       listenable: castService,
       builder: (context, _) {
@@ -627,7 +618,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Icon(
-                  isConnected ? Icons.cast_connected_rounded : Icons.cast_rounded,
+                  isConnected
+                      ? Icons.cast_connected_rounded
+                      : Icons.cast_rounded,
                   size: 20,
                   color: isConnected ? Colors.green : AppTheme.primaryColor,
                 ),
@@ -647,7 +640,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      isConnected 
+                      isConnected
                           ? 'Transmitindo para $deviceName'
                           : 'Nenhum dispositivo conectado',
                       style: const TextStyle(
@@ -660,7 +653,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               if (isConnected)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.green.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(12),
@@ -701,9 +697,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         content: Text(message),
         backgroundColor: AppTheme.primaryColor,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -711,63 +705,62 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showClearDataDialog() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
-        ),
-        title: const Row(
-          children: [
-            Icon(Icons.warning_rounded, color: Colors.red),
-            SizedBox(width: 12),
-            Text(
-              'Limpar dados',
-              style: TextStyle(color: AppTheme.textPrimary),
+      builder:
+          (context) => AlertDialog(
+            backgroundColor: AppTheme.cardColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(AppTheme.borderRadiusMedium),
             ),
-          ],
-        ),
-        content: const Text(
-          'Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita.',
-          style: TextStyle(color: AppTheme.textSecondary),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancelar'),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              await StorageService.clearAll();
-              if (mounted) {
-                Navigator.pop(context);
-                _showSnackBar('Todos os dados foram limpos!');
-                _loadSettings();
-              }
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+            title: const Row(
+              children: [
+                Icon(Icons.warning_rounded, color: Colors.red),
+                SizedBox(width: 12),
+                Text(
+                  'Limpar dados',
+                  style: TextStyle(color: AppTheme.textPrimary),
+                ),
+              ],
             ),
-            child: const Text('Limpar'),
+            content: const Text(
+              'Tem certeza que deseja limpar todos os dados? Esta ação não pode ser desfeita.',
+              style: TextStyle(color: AppTheme.textSecondary),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('Cancelar'),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  await StorageService.clearAll();
+                  if (mounted) {
+                    Navigator.pop(context);
+                    _showSnackBar('Todos os dados foram limpos!');
+                    _loadSettings();
+                  }
+                },
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Limpar'),
+              ),
+            ],
           ),
-        ],
-      ),
     );
   }
-  
+
   // ===== MÉTODOS DE SINCRONIZAÇÃO =====
-  
+
   Widget _buildSyncStatus() {
     return FutureBuilder<CacheInfo>(
       future: ContentSyncService.getCacheInfo(),
       builder: (context, snapshot) {
         final cacheInfo = snapshot.data;
         final provider = context.watch<ChannelProvider>();
-        
+
         String statusText;
         String subtitleText;
         IconData statusIcon;
         Color statusColor;
-        
+
         if (provider.isSyncing) {
           statusText = 'Sincronizando...';
           subtitleText = 'Buscando novos conteúdos';
@@ -775,7 +768,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           statusColor = AppTheme.secondaryColor;
         } else if (cacheInfo?.hasCache == true) {
           statusText = 'Conteúdo atualizado';
-          subtitleText = 'Última sincronização: ${cacheInfo!.lastSyncFormatted}';
+          subtitleText =
+              'Última sincronização: ${cacheInfo!.lastSyncFormatted}';
           statusIcon = Icons.cloud_done_rounded;
           statusColor = Colors.green;
         } else {
@@ -784,7 +778,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           statusIcon = Icons.cloud_off_rounded;
           statusColor = AppTheme.textMuted;
         }
-        
+
         return Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -795,16 +789,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: statusColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: provider.isSyncing
-                  ? SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(statusColor),
-                      ),
-                    )
-                  : Icon(statusIcon, size: 20, color: statusColor),
+                child:
+                    provider.isSyncing
+                        ? SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              statusColor,
+                            ),
+                          ),
+                        )
+                        : Icon(statusIcon, size: 20, color: statusColor),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -832,7 +829,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               if (cacheInfo?.version.isNotEmpty == true)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppTheme.primaryColor.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
@@ -852,19 +852,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
       },
     );
   }
-  
+
   Future<void> _syncContent() async {
     final provider = context.read<ChannelProvider>();
-    
+
     if (provider.isSyncing) {
       _showSnackBar('Sincronização já em andamento...');
       return;
     }
-    
+
     _showSnackBar('Iniciando sincronização...');
-    
+
     final result = await provider.refreshContent();
-    
+
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -879,25 +879,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Expanded(child: Text(result.message)),
             ],
           ),
-          backgroundColor: result.success 
-            ? Colors.green.withOpacity(0.9)
-            : Colors.red.withOpacity(0.9),
+          backgroundColor:
+              result.success
+                  ? Colors.green.withOpacity(0.9)
+                  : Colors.red.withOpacity(0.9),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           duration: const Duration(seconds: 3),
         ),
       );
-      
+
       // Força rebuild para atualizar o status
       setState(() {});
     }
   }
-  
+
   Future<void> _clearContentCache() async {
     final provider = context.read<ChannelProvider>();
-    
+
     await provider.clearContentCache();
-    
+
     if (mounted) {
       setState(() {});
       _showSnackBar('Cache de conteúdo limpo!');

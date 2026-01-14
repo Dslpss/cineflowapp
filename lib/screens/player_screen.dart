@@ -6,6 +6,7 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 import '../models/channel.dart';
 import '../theme/app_theme.dart';
 import '../widgets/cast_device_sheet.dart';
+import '../services/storage_service.dart';
 
 /// Tela de reprodução de vídeo
 class PlayerScreen extends StatefulWidget {
@@ -26,12 +27,29 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _isLoading = true;
   String? _error;
   bool _showControls = true;
-  
-  // Controle de reconexão automática
   int _reconnectAttempts = 0;
   static const int _maxReconnectAttempts = 5;
   bool _isReconnecting = false;
   DateTime? _lastPlaybackTime;
+  DateTime? _lastProgressSaveTime;
+  Duration? _lastSavedPosition;
+
+  bool get _isVod {
+    final category = widget.channel.category.toLowerCase();
+    if (category.startsWith('filmes:') || category.trim() == 'show') {
+      return true;
+    }
+    if (category.startsWith('streaming:') || category.startsWith(' streaming:')) {
+      return true;
+    }
+    if (category.startsWith('serie:')) {
+      return true;
+    }
+    if (category.contains('séries') || category.contains('series')) {
+      return true;
+    }
+    return false;
+  }
 
   @override
   void initState() {
@@ -57,7 +75,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
         _error = null;
       });
 
-      // Cria o controller do video player
       _videoController = VideoPlayerController.networkUrl(
         Uri.parse(widget.channel.streamUrl),
         httpHeaders: {
@@ -67,7 +84,18 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
       await _videoController!.initialize();
 
-      // Cria o controller do Chewie com UI customizada
+      if (_isVod) {
+        final savedPosition = StorageService.getPlaybackProgress(widget.channel.id);
+        if (savedPosition != null) {
+          final duration = _videoController!.value.duration;
+          if (duration.inSeconds > 0 &&
+              savedPosition < duration &&
+              savedPosition.inSeconds > 5) {
+            await _videoController!.seekTo(savedPosition);
+          }
+        }
+      }
+
       _chewieController = ChewieController(
         videoPlayerController: _videoController!,
         autoPlay: true,
@@ -146,7 +174,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
         ),
       );
 
-      // Listener para detectar quando o stream para (conexão cortada)
       _videoController!.addListener(_onPlayerStateChanged);
 
       setState(() {
@@ -172,20 +199,21 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
   }
 
-  /// Monitora estado do player para detectar interrupções
   void _onPlayerStateChanged() {
     if (_videoController == null || !mounted) return;
     
     final isPlaying = _videoController!.value.isPlaying;
     final hasError = _videoController!.value.hasError;
+
+    if (_isVod) {
+      _savePlaybackProgress();
+    }
     
-    // Se está reproduzindo, atualiza o tempo da última reprodução
     if (isPlaying) {
       _lastPlaybackTime = DateTime.now();
       _reconnectAttempts = 0; // Reset tentativas quando está funcionando
     }
     
-    // Detecta se o stream travou (não está reproduzindo, sem erro explícito, mas tinha reprodução recente)
     if (!isPlaying && 
         !hasError && 
         !_isLoading && 
@@ -202,10 +230,45 @@ class _PlayerScreenState extends State<PlayerScreen> {
       }
     }
     
-    // Detecta erro explícito
     if (hasError && !_isReconnecting && _reconnectAttempts < _maxReconnectAttempts) {
       _handleStreamInterruption();
     }
+  }
+
+  Future<void> _savePlaybackProgress({bool force = false}) async {
+    if (!_isVod) return;
+    if (_videoController == null) return;
+    if (!_videoController!.value.isInitialized) return;
+
+    final position = _videoController!.value.position;
+    final duration = _videoController!.value.duration;
+
+    if (duration.inSeconds <= 0) return;
+
+    if (!force) {
+      if (_lastProgressSaveTime != null &&
+          DateTime.now().difference(_lastProgressSaveTime!).inSeconds < 5) {
+        return;
+      }
+      if (_lastSavedPosition != null &&
+          (position.inSeconds - _lastSavedPosition!.inSeconds).abs() < 5) {
+        return;
+      }
+    }
+
+    final progressFraction =
+        duration.inSeconds == 0 ? 0.0 : position.inSeconds / duration.inSeconds;
+
+    if (progressFraction >= 0.9) {
+      await StorageService.clearPlaybackProgress(widget.channel.id);
+      _lastSavedPosition = null;
+      _lastProgressSaveTime = DateTime.now();
+      return;
+    }
+
+    await StorageService.savePlaybackProgress(widget.channel.id, position);
+    _lastSavedPosition = position;
+    _lastProgressSaveTime = DateTime.now();
   }
 
   /// Trata interrupção do stream com reconexão automática
@@ -236,6 +299,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   @override
   void dispose() {
+    _savePlaybackProgress(force: true);
+
     // Desativa wakelock ao sair
     WakelockPlus.disable();
     

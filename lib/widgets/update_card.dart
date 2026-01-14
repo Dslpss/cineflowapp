@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../services/app_check_service.dart';
-import '../theme/app_theme.dart';
 
 /// Widget para mostrar card de atualização disponível
 class UpdateCard extends StatelessWidget {

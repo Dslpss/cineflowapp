@@ -7,10 +7,7 @@ import '../theme/app_theme.dart';
 class SplashScreen extends StatefulWidget {
   final Widget nextScreen;
 
-  const SplashScreen({
-    super.key,
-    required this.nextScreen,
-  });
+  const SplashScreen({super.key, required this.nextScreen});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -26,35 +23,35 @@ class _SplashScreenState extends State<SplashScreen>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: const Duration(milliseconds: 2500),
       vsync: this,
     );
-    
+
     _scaleAnimation = Tween<double>(begin: 0.5, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.0, 0.5, curve: Curves.elasticOut),
       ),
     );
-    
+
     _opacityAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.0, 0.3, curve: Curves.easeIn),
       ),
     );
-    
+
     _progressAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _controller,
         curve: const Interval(0.3, 1.0, curve: Curves.easeInOut),
       ),
     );
-    
+
     _controller.forward();
-    
+
     // Adia o carregamento para após o build completo
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadAndNavigate();
@@ -64,20 +61,23 @@ class _SplashScreenState extends State<SplashScreen>
   Future<void> _loadAndNavigate() async {
     // Sincroniza conteúdo (busca do servidor ou cache, fallback para asset)
     final provider = context.read<ChannelProvider>();
-    
+
     // Usa o novo sistema de sincronização
     final result = await provider.syncContent();
-    
+
     // Log do resultado
-    debugPrint('📺 Sincronização: ${result.message} (${result.source?.name ?? "N/A"})');
-    
+    debugPrint(
+      '📺 Sincronização: ${result.message} (${result.source?.name ?? "N/A"})',
+    );
+
     // Espera a animação completar
     await Future.delayed(const Duration(milliseconds: 2000));
-    
+
     if (mounted) {
       Navigator.of(context).pushReplacement(
         PageRouteBuilder(
-          pageBuilder: (context, animation, secondaryAnimation) => widget.nextScreen,
+          pageBuilder:
+              (context, animation, secondaryAnimation) => widget.nextScreen,
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
@@ -101,11 +101,7 @@ class _SplashScreenState extends State<SplashScreen>
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFF0A0A0F),
-              Color(0xFF15152D),
-              Color(0xFF0A0A0F),
-            ],
+            colors: [Color(0xFF0A0A0F), Color(0xFF15152D), Color(0xFF0A0A0F)],
           ),
         ),
         child: AnimatedBuilder(
@@ -148,7 +144,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                   ),
                 ),
-                
+
                 // Conteúdo central
                 Center(
                   child: Column(
@@ -181,20 +177,21 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 40),
-                      
+
                       // Nome do app
                       Opacity(
                         opacity: _opacityAnimation.value,
                         child: ShaderMask(
-                          shaderCallback: (bounds) => const LinearGradient(
-                            colors: [
-                              Color(0xFF6C5CE7),
-                              Color(0xFF00D9FF),
-                              Color(0xFFFF6B9D),
-                            ],
-                          ).createShader(bounds),
+                          shaderCallback:
+                              (bounds) => const LinearGradient(
+                                colors: [
+                                  Color(0xFF6C5CE7),
+                                  Color(0xFF00D9FF),
+                                  Color(0xFFFF6B9D),
+                                ],
+                              ).createShader(bounds),
                           child: const Text(
                             'CineFlow',
                             style: TextStyle(
@@ -206,9 +203,9 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 8),
-                      
+
                       // Slogan
                       Opacity(
                         opacity: _opacityAnimation.value,
@@ -221,9 +218,9 @@ class _SplashScreenState extends State<SplashScreen>
                           ),
                         ),
                       ),
-                      
+
                       const SizedBox(height: 60),
-                      
+
                       // Barra de progresso
                       Opacity(
                         opacity: _opacityAnimation.value,
@@ -236,9 +233,10 @@ class _SplashScreenState extends State<SplashScreen>
                                 child: LinearProgressIndicator(
                                   value: _progressAnimation.value,
                                   backgroundColor: AppTheme.surfaceColor,
-                                  valueColor: const AlwaysStoppedAnimation<Color>(
-                                    AppTheme.primaryColor,
-                                  ),
+                                  valueColor:
+                                      const AlwaysStoppedAnimation<Color>(
+                                        AppTheme.primaryColor,
+                                      ),
                                   minHeight: 4,
                                 ),
                               ),
@@ -257,7 +255,7 @@ class _SplashScreenState extends State<SplashScreen>
                     ],
                   ),
                 ),
-                
+
                 // Versão
                 Positioned(
                   bottom: 40,
@@ -265,19 +263,19 @@ class _SplashScreenState extends State<SplashScreen>
                   right: 0,
                   child: Opacity(
                     opacity: _opacityAnimation.value,
-                    child: const Column(
+                    child: Column(
                       children: [
-                        Text(
-                          'Versão 1.0.0',
+                        const Text(
+                          'Versão 1.0.7',
                           style: TextStyle(
                             fontSize: 12,
                             color: AppTheme.textMuted,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
-                          '© 2024 CineFlow',
-                          style: TextStyle(
+                          '© ${DateTime.now().year} CineFlow',
+                          style: const TextStyle(
                             fontSize: 10,
                             color: AppTheme.textMuted,
                           ),

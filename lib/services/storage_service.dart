@@ -6,7 +6,8 @@ class StorageService {
   static const String _favoritesKey = 'favorites';
   static const String _recentKey = 'recent_channels';
   static const String _settingsKey = 'settings';
-  
+  static const String _playbackProgressKey = 'playback_progress';
+
   static SharedPreferences? _prefs;
 
   /// Inicializa o serviço
@@ -17,7 +18,9 @@ class StorageService {
   /// Verifica se está inicializado
   static SharedPreferences get prefs {
     if (_prefs == null) {
-      throw Exception('StorageService não inicializado. Chame init() primeiro.');
+      throw Exception(
+        'StorageService não inicializado. Chame init() primeiro.',
+      );
     }
     return _prefs!;
   }
@@ -69,18 +72,18 @@ class StorageService {
   /// Adiciona um canal aos recentes (máximo 20)
   static Future<bool> addRecent(String channelId) async {
     final recents = getRecentIds();
-    
+
     // Remove se já existe para reordenar
     recents.remove(channelId);
-    
+
     // Adiciona no início
     recents.insert(0, channelId);
-    
+
     // Mantém apenas os 20 mais recentes
     if (recents.length > 20) {
       recents.removeRange(20, recents.length);
     }
-    
+
     return prefs.setStringList(_recentKey, recents);
   }
 
@@ -89,13 +92,70 @@ class StorageService {
     return prefs.remove(_recentKey);
   }
 
+  static Map<String, int> _getPlaybackProgressMap() {
+    final json = prefs.getString(_playbackProgressKey);
+    if (json == null || json.isEmpty) return {};
+    try {
+      final decoded = jsonDecode(json) as Map<String, dynamic>;
+      final result = <String, int>{};
+      for (final entry in decoded.entries) {
+        final value = entry.value;
+        if (value is int) {
+          result[entry.key] = value;
+        } else if (value is String) {
+          final parsed = int.tryParse(value);
+          if (parsed != null) {
+            result[entry.key] = parsed;
+          }
+        }
+      }
+      return result;
+    } catch (_) {
+      return {};
+    }
+  }
+
+  static Future<bool> _setPlaybackProgressMap(Map<String, int> map) {
+    if (map.isEmpty) {
+      return prefs.remove(_playbackProgressKey);
+    }
+    return prefs.setString(_playbackProgressKey, jsonEncode(map));
+  }
+
+  static Duration? getPlaybackProgress(String channelId) {
+    final map = _getPlaybackProgressMap();
+    final seconds = map[channelId];
+    if (seconds == null || seconds <= 0) {
+      return null;
+    }
+    return Duration(seconds: seconds);
+  }
+
+  static Future<bool> savePlaybackProgress(
+    String channelId,
+    Duration position,
+  ) {
+    final map = _getPlaybackProgressMap();
+    map[channelId] = position.inSeconds;
+    return _setPlaybackProgressMap(map);
+  }
+
+  static Future<bool> clearPlaybackProgress(String channelId) {
+    final map = _getPlaybackProgressMap();
+    if (!map.containsKey(channelId)) {
+      return Future.value(true);
+    }
+    map.remove(channelId);
+    return _setPlaybackProgressMap(map);
+  }
+
   // ===== CONFIGURAÇÕES =====
 
   /// Obtém uma configuração
   static T? getSetting<T>(String key, {T? defaultValue}) {
     final settingsJson = prefs.getString(_settingsKey);
     if (settingsJson == null) return defaultValue;
-    
+
     try {
       final settings = jsonDecode(settingsJson) as Map<String, dynamic>;
       return settings[key] as T? ?? defaultValue;
@@ -108,7 +168,7 @@ class StorageService {
   static Future<bool> setSetting(String key, dynamic value) async {
     final settingsJson = prefs.getString(_settingsKey);
     Map<String, dynamic> settings = {};
-    
+
     if (settingsJson != null) {
       try {
         settings = jsonDecode(settingsJson) as Map<String, dynamic>;
@@ -116,7 +176,7 @@ class StorageService {
         settings = {};
       }
     }
-    
+
     settings[key] = value;
     return prefs.setString(_settingsKey, jsonEncode(settings));
   }
